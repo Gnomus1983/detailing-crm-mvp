@@ -1,0 +1,10 @@
+project_id = "detailing-crm-mvp"
+
+[functions.lead-alert]
+verify_jwt = false
+
+[functions.follow-up-reminder]
+verify_jwt = false
+
+[functions.daily-digest]
+verify_jwt = false

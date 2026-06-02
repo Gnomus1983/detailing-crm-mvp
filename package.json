@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "demo:flow": "node scripts/demo-flow.mjs",
+    "public:flow": "node scripts/public-flow-check.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",
