@@ -19,14 +19,14 @@ function startOfUtcDayIso() {
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse({ error: "Metoda nu este permisa" }, 405);
   }
 
   const internalToken = Deno.env.get("ALERT_INTERNAL_TOKEN");
   if (internalToken) {
     const provided = request.headers.get("x-internal-token");
     if (provided !== internalToken) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+      return jsonResponse({ error: "Neautorizat" }, 401);
     }
   }
 
@@ -36,7 +36,7 @@ Deno.serve(async (request) => {
   if (!telegramBotToken || !telegramChatId) {
     return jsonResponse(
       {
-        error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_MANAGER_CHAT_ID"
+        error: "Lipsesc TELEGRAM_BOT_TOKEN sau TELEGRAM_MANAGER_CHAT_ID"
       },
       500
     );
@@ -75,14 +75,14 @@ Deno.serve(async (request) => {
       scope_key: digestDay,
       payload: {
         day: digestDay,
-        reason: "already_sent_today"
+        reason: "deja_trimis_azi"
       }
     });
 
     return jsonResponse({
       ok: true,
       skipped: true,
-      reason: "Digest already sent today"
+      reason: "Rezumatul a fost deja trimis astazi"
     });
   }
 
@@ -126,13 +126,13 @@ Deno.serve(async (request) => {
 
   try {
     const message = [
-      "<b>Daily CRM digest</b>",
+      "<b>Rezumat CRM zilnic</b>",
       "",
-      `<b>Date:</b> ${escapeTelegramHtml(digestDay)}`,
-      `<b>New leads today:</b> ${escapeTelegramHtml(String(newLeadsCount || 0))}`,
-      `<b>Overdue follow-ups:</b> ${escapeTelegramHtml(String(overdueFollowUpsCount || 0))}`,
-      `<b>Active leads:</b> ${escapeTelegramHtml(String(activeLeadsCount || 0))}`,
-      `<b>Done today:</b> ${escapeTelegramHtml(String(doneTodayCount || 0))}`
+      `<b>Data:</b> ${escapeTelegramHtml(digestDay)}`,
+      `<b>Solicitari noi astazi:</b> ${escapeTelegramHtml(String(newLeadsCount || 0))}`,
+      `<b>Follow-up-uri restante:</b> ${escapeTelegramHtml(String(overdueFollowUpsCount || 0))}`,
+      `<b>Solicitari active:</b> ${escapeTelegramHtml(String(activeLeadsCount || 0))}`,
+      `<b>Finalizate astazi:</b> ${escapeTelegramHtml(String(doneTodayCount || 0))}`
     ].join("\n");
 
     const telegramResult = await sendTelegramMessage({

@@ -1,39 +1,59 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { z } from "npm:zod@3.23.8";
 import { createAutomationRun } from "../_shared/automation-log.ts";
 import { escapeTelegramHtml, sendTelegramMessage } from "../_shared/telegram.ts";
 
-type LeadAlertPayload = {
-  event?: string;
-  public_entry?: boolean;
-  lead?: {
-    id?: string;
-    source?: string | null;
-    preferred_date?: string | null;
-    preferred_time?: string | null;
-    comment?: string | null;
-    estimated_price?: number | string | null;
-    follow_up_at?: string | null;
-    services?: { name?: string | null } | null;
-    clients?: {
-      name?: string | null;
-      phone?: string | null;
-      car_make?: string | null;
-      car_model?: string | null;
-      car_year?: number | null;
-    } | null;
-  } | null;
-  client?: {
-    name?: string | null;
-    phone?: string | null;
-  } | null;
-  intake?: {
-    client_name?: string | null;
-    phone?: string | null;
-    source?: string | null;
-    service_id?: string | null;
-  } | null;
-  sent_at?: string;
-};
+const leadAlertPayloadSchema = z
+  .object({
+    event: z.literal("lead_created").optional(),
+    public_entry: z.boolean().optional(),
+    lead: z
+      .object({
+        id: z.string().uuid().optional(),
+        source: z.string().max(40).nullable().optional(),
+        preferred_date: z.string().max(20).nullable().optional(),
+        preferred_time: z.string().max(60).nullable().optional(),
+        comment: z.string().max(2000).nullable().optional(),
+        estimated_price: z.union([z.number(), z.string().max(40), z.null()]).optional(),
+        follow_up_at: z.string().max(80).nullable().optional(),
+        services: z
+          .object({
+            name: z.string().max(120).nullable().optional()
+          })
+          .nullable()
+          .optional(),
+        clients: z
+          .object({
+            name: z.string().max(120).nullable().optional(),
+            phone: z.string().max(40).nullable().optional(),
+            car_make: z.string().max(80).nullable().optional(),
+            car_model: z.string().max(80).nullable().optional(),
+            car_year: z.number().int().nullable().optional()
+          })
+          .nullable()
+          .optional()
+      })
+      .nullable()
+      .optional(),
+    client: z
+      .object({
+        name: z.string().max(120).nullable().optional(),
+        phone: z.string().max(40).nullable().optional()
+      })
+      .nullable()
+      .optional(),
+    intake: z
+      .object({
+        client_name: z.string().max(120).nullable().optional(),
+        phone: z.string().max(40).nullable().optional(),
+        source: z.string().max(40).nullable().optional(),
+        service_id: z.string().uuid().nullable().optional()
+      })
+      .nullable()
+      .optional(),
+    sent_at: z.string().datetime({ offset: true }).optional()
+  })
+  .strict();
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
@@ -44,21 +64,21 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
-function normalizeAlert(payload: LeadAlertPayload) {
+function normalizeAlert(payload: z.infer<typeof leadAlertPayloadSchema>) {
   const lead = payload.lead || {};
   const client = payload.client || lead.clients || {};
   const intake = payload.intake || {};
 
-  const clientName = client.name || intake.client_name || "Unknown client";
-  const phone = client.phone || intake.phone || "No phone";
+  const clientName = client.name || intake.client_name || "Client necunoscut";
+  const phone = client.phone || intake.phone || "Fara telefon";
   const source = lead.source || intake.source || "manual";
-  const service = lead.services?.name || "Service not resolved yet";
+  const service = lead.services?.name || "Serviciu nerezolvat inca";
   const preferredSlot = lead.preferred_date
     ? `${lead.preferred_date}${lead.preferred_time ? ` ${lead.preferred_time}` : ""}`
-    : "Not set";
-  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "No car details";
-  const comment = lead.comment || "No comment";
-  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `EUR ${lead.estimated_price}` : "Not estimated";
+    : "Nesetat";
+  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Fara detalii auto";
+  const comment = lead.comment || "Fara comentariu";
+  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `${lead.estimated_price} EUR` : "Neevaluat";
 
   return {
     leadId: lead.id || "unknown",
@@ -76,14 +96,14 @@ function normalizeAlert(payload: LeadAlertPayload) {
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse({ error: "Metoda nu este permisa" }, 405);
   }
 
   const internalToken = Deno.env.get("ALERT_INTERNAL_TOKEN");
   if (internalToken) {
     const provided = request.headers.get("x-internal-token");
     if (provided !== internalToken) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+      return jsonResponse({ error: "Neautorizat" }, 401);
     }
   }
 
@@ -93,15 +113,28 @@ Deno.serve(async (request) => {
   if (!telegramBotToken || !telegramChatId) {
     return jsonResponse(
       {
-        error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_MANAGER_CHAT_ID"
+        error: "Lipsesc TELEGRAM_BOT_TOKEN sau TELEGRAM_MANAGER_CHAT_ID"
       },
       500
     );
   }
 
-  const payload = (await request.json()) as LeadAlertPayload;
+  const body = await request.json();
+  const parsed = leadAlertPayloadSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return jsonResponse(
+      {
+        error: "Payload-ul de alerta nu este valid.",
+        details: parsed.error.flatten()
+      },
+      400
+    );
+  }
+
+  const payload = parsed.data;
   if (payload.event && payload.event !== "lead_created") {
-    return jsonResponse({ skipped: true, reason: `Unsupported event ${payload.event}` });
+    return jsonResponse({ skipped: true, reason: `Eveniment nesuportat ${payload.event}` });
   }
 
   const alert = normalizeAlert(payload);
@@ -122,19 +155,19 @@ Deno.serve(async (request) => {
 
   try {
     const message = [
-      "<b>New detailing lead</b>",
+      "<b>Solicitare noua detailing</b>",
       "",
       `<b>Client:</b> ${escapeTelegramHtml(alert.clientName)}`,
-      `<b>Phone:</b> ${escapeTelegramHtml(alert.phone)}`,
-      `<b>Service:</b> ${escapeTelegramHtml(alert.service)}`,
-      `<b>Source:</b> ${escapeTelegramHtml(alert.source)}`,
-      `<b>Car:</b> ${escapeTelegramHtml(alert.car)}`,
-      `<b>Preferred slot:</b> ${escapeTelegramHtml(alert.preferredSlot)}`,
-      `<b>Estimated price:</b> ${escapeTelegramHtml(alert.price)}`,
-      `<b>Lead ID:</b> ${escapeTelegramHtml(alert.leadId)}`,
-      `<b>Entry:</b> ${alert.publicEntry ? "Public form" : "Internal CRM"}`,
+      `<b>Telefon:</b> ${escapeTelegramHtml(alert.phone)}`,
+      `<b>Serviciu:</b> ${escapeTelegramHtml(alert.service)}`,
+      `<b>Sursa:</b> ${escapeTelegramHtml(alert.source)}`,
+      `<b>Masina:</b> ${escapeTelegramHtml(alert.car)}`,
+      `<b>Interval preferat:</b> ${escapeTelegramHtml(alert.preferredSlot)}`,
+      `<b>Pret estimat:</b> ${escapeTelegramHtml(alert.price)}`,
+      `<b>ID solicitare:</b> ${escapeTelegramHtml(alert.leadId)}`,
+      `<b>Intrare:</b> ${alert.publicEntry ? "Formular public" : "CRM intern"}`,
       "",
-      `<b>Comment:</b> ${escapeTelegramHtml(alert.comment)}`
+      `<b>Comentariu:</b> ${escapeTelegramHtml(alert.comment)}`
     ].join("\n");
 
     const telegramResult = await sendTelegramMessage({
@@ -147,7 +180,7 @@ Deno.serve(async (request) => {
       await supabase.from("lead_events").insert({
         lead_id: alert.leadId,
         type: "reminder_sent",
-        note: "Telegram lead alert sent to manager.",
+        note: "Alerta Telegram pentru solicitare a fost trimisa managerului.",
         payload: {
           channel: "telegram",
           trigger: "lead_created_alert"

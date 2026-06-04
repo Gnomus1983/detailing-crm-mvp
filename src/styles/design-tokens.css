@@ -1,0 +1,66 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=Prata&display=swap");
+
+:root {
+  --font-primary: "DM Sans", sans-serif;
+  --font-display: "Prata", serif;
+
+  --color-accent: #2dc9a0;
+  --color-accent-dark: #1fa882;
+  --color-accent-bg: #e8faf4;
+  --color-accent-soft: rgba(45, 201, 160, 0.12);
+  --color-accent-glow: rgba(45, 201, 160, 0.2);
+
+  --color-bg: #f9fafb;
+  --color-bg-2: #f3f7f6;
+  --color-bg-3: #eef5f3;
+  --color-bg-overlay: rgba(249, 250, 251, 0.88);
+  --color-bg-overlay-strong: rgba(249, 250, 251, 0.94);
+
+  --color-surface: #ffffff;
+  --color-surface-2: #ffffff;
+  --color-surface-muted: #f9fafb;
+
+  --color-text: #111827;
+  --color-text-strong: #0f172a;
+  --color-text-muted: #6b7280;
+  --color-text-inverse: #ffffff;
+  --color-text-inverse-muted: rgba(255, 255, 255, 0.84);
+  --color-text-inverse-soft: rgba(255, 255, 255, 0.72);
+
+  --color-line: #e5e7eb;
+  --color-line-strong: #d1d5db;
+  --color-line-inverse: rgba(255, 255, 255, 0.14);
+  --color-dashed: rgba(45, 201, 160, 0.34);
+
+  --color-success: #167a5d;
+  --color-danger: #b44737;
+  --color-info: #2368a2;
+  --color-violet: #7550b6;
+  --color-warning: #9b641a;
+  --color-status-new-bg: #e6f1fb;
+  --color-status-new-text: #185fa5;
+  --color-status-progress-bg: #faeeda;
+  --color-status-progress-text: #854f0b;
+  --color-status-done-bg: #e8faf4;
+  --color-status-done-text: #0f6e56;
+  --color-status-lost-bg: #f3f4f6;
+  --color-status-lost-text: #6b7280;
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 18px;
+  --space-xl: 24px;
+  --space-2xl: 30px;
+  --space-3xl: 44px;
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-2xl: 26px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 24px 60px rgba(5, 14, 18, 0.18);
+  --shadow-dropdown: 0 16px 32px rgba(5, 14, 18, 0.12);
+}

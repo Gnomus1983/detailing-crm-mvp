@@ -38,28 +38,27 @@ The real `.env` on the desktop machine points to the active Supabase project.
 - The app runs locally with `npm.cmd run dev`
 - Production build passes with `npm.cmd run build`
 - Supabase has live demo data
-- RLS was relaxed for MVP reads so the interface can show demo data immediately
+- public intake works live
+- Edge Functions work live for:
+  - `lead-alert`
+  - `follow-up-reminder`
+  - `daily-digest`
 - A profile row was inserted manually for the current owner account
 
 ## Known MVP compromises
 
-- Read policies are intentionally broad for MVP speed
+- Access control still needs tightening and final QA
 - There is no tenant isolation yet
-- There is no public client form inside this app yet
-- There is no create-lead form yet
-- There is no notes timeline UI yet
-- There is no n8n webhook integration yet
+- Anti-spam protection on the public form is still minimal
+- Historical docs still contain some old architecture wording
 
 ## Recommended next steps
 
-1. Add `new lead` form inside CRM
-2. Add `lead events` timeline
-3. Add create/update follow-up date UI
-4. Add role-aware visibility for `owner`, `manager`, `detailer`
-5. Add public client request form
-6. Connect first n8n workflow:
-   - new lead -> Telegram alert
-   - follow_up_at -> reminder
+1. Finish role-aware visibility QA for `owner`, `manager`, `detailer`
+2. Tighten RLS / access control
+3. Add stronger anti-spam protection to the public request flow
+4. Clean remaining legacy `n8n` wording and compatibility tails
+5. Prepare stronger sales demo and believable walkthrough
 
 ## Moving to another machine
 

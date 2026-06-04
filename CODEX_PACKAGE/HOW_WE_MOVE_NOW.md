@@ -6,8 +6,13 @@ We are building a small-business CRM product in this order:
 
 1. CRM core
 2. backend automations
-3. AI assistant
-4. optional AI autopilot later
+3. UX / visual system
+4. public-facing site / request layer
+5. onboarding / usage layer
+6. QA / testing discipline
+7. sales demo layer
+8. AI assistant
+9. optional AI autopilot later
 
 ## Architecture Direction
 
@@ -30,22 +35,33 @@ Already built:
 - public request form
 - role-aware visibility
 - automation scaffolding
+- Romanian localization layer
+- single-user role QA path
 
 ## Current Priorities
 
 ### Priority 1
-Apply the latest schema and verify public flow
+Strengthen the UX / visual system
 
 ### Priority 2
-Complete deploy/invoke path for Edge Functions
+Strengthen the public-facing product layer
 
 ### Priority 3
-Use Supabase-native backend automations as the main workflow engine
+Create onboarding / usage documentation
 
 ### Priority 4
-Only after stable automation, begin AI assistant planning
+Keep security/hardening active in parallel
 
 ### Priority 5
+Make QA/testing discipline explicit
+
+### Priority 6
+Finalize the sales demo layer
+
+### Priority 7
+Only after stable web + automation core, begin AI assistant planning
+
+### Priority 8
 Only after stable web + automation core, prepare mobile app direction
 
 ## AI Direction
@@ -67,3 +83,4 @@ AI autopilot:
 Do not try to make the system fully autonomous too early.
 
 Stable automation must come first.
+Clear product usage, visual confidence, and safety must also come before AI.

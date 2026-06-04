@@ -9,12 +9,13 @@ Open the project `detailing-crm-mvp-main`.
 First read these files in this order:
 
 1. `CODEX_PACKAGE/PACKAGE_INDEX.md`
-2. `CODEX_PACKAGE/ARCHITECTURE_SHIFT_PLAN.md`
-3. `CODEX_PACKAGE/ACTION_PLAN_SUPABASE_NATIVE.md`
-4. `PROJECT_STATUS_PLAN.md`
-5. `NEXT_TASKS.md`
-6. `CODEX_PACKAGE/RISK_TABLE_AND_GUARDRAILS.md`
-7. `CODEX_PACKAGE/EDGE_FUNCTIONS_BACKLOG.md`
+2. `CODEX_PACKAGE/MASTER_EXECUTION_ROADMAP_2026-06-03.md`
+3. `CODEX_PACKAGE/ARCHITECTURE_SHIFT_PLAN.md`
+4. `CODEX_PACKAGE/ACTION_PLAN_SUPABASE_NATIVE.md`
+5. `PROJECT_STATUS_PLAN.md`
+6. `NEXT_TASKS.md`
+7. `CODEX_PACKAGE/RISK_TABLE_AND_GUARDRAILS.md`
+8. `CODEX_PACKAGE/EDGE_FUNCTIONS_BACKLOG.md`
 
 Project context:
 
@@ -36,18 +37,27 @@ What is already done:
 - follow_up_at works
 - role-aware visibility has been added
 - public request form exists at `/request`
-- initial Supabase-native automation scaffolds already exist:
+- public intake works live
+- Supabase-native automations work live:
   - `lead-alert`
   - `follow-up-reminder`
   - `daily-digest`
 - `automation_runs` was added as a system automation log table
+- Romanian localization is the main user-facing language
+- single-user role QA path was prepared and verified live
+- demo/sales walkthrough already exists
 
 Main product direction:
 
 - first build stable CRM core
 - then build stable backend automations
-- then add AI assistant
-- only later consider AI autopilot
+- then strengthen UX / visual system
+- then strengthen public-facing site / request layer
+- then create onboarding / usage instructions
+- then make QA / testing discipline explicit
+- then finalize the sales/demo layer
+- only after that move toward AI assistant
+- only later consider AI autopilot, SaaS expansion, and mobile
 
 Important rules:
 
@@ -60,11 +70,13 @@ Important rules:
 
 Current likely next steps:
 
-1. apply latest `supabase/schema.sql`
-2. verify public flow
-3. prepare deploy/invoke flow for Edge Functions
-4. continue product-native automation setup
-5. later prepare AI assistant layer
+1. strengthen UX / visual system
+2. strengthen the public-facing product layer
+3. create onboarding / usage documents
+4. create QA / testing documents and discipline
+5. keep safety / hardening active in parallel
+6. strengthen the sales demo path
+7. only later prepare AI assistant layer
 
 When continuing:
 

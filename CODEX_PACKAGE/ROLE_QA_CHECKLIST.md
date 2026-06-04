@@ -1,82 +1,94 @@
 # ROLE QA CHECKLIST
 
-## Goal
+## Scop
 
-Confirm that role-aware visibility works correctly for:
+Confirmam ca vizibilitatea bazata pe rol functioneaza corect pentru:
 - owner
 - manager
 - detailer
 
-## Required Demo Accounts
+## Conturi Demo Necesare
 
-- owner account
-- manager account
-- detailer account
+- cont `owner`
+- cont `manager`
+- cont `detailer`
 
-These accounts must already exist in Supabase Auth.
+Aceste conturi trebuie sa existe deja in Supabase Auth.
 
 ## Setup
 
-1. Open Supabase SQL editor
-2. Run:
+1. Deschide Supabase SQL Editor
+2. Ruleaza:
    - `supabase/demo_role_setup.sql`
-3. Replace the placeholder emails inside that file before running it
+3. Inlocuieste emailurile placeholder din acel fisier inainte de rulare
 
-## Expected Result After Setup
+### Varianta rapida daca exista un singur cont real
 
-- owner profile gets role `owner`
-- manager profile gets role `manager`
-- detailer profile gets role `detailer`
-- one demo lead is assigned to the detailer
-- one `assigned` event appears in timeline for that lead
+Daca in proiect exista doar un singur utilizator autentificat, foloseste:
+- `supabase/role_qa_single_user.sql`
 
-## Owner QA
+Aceasta varianta permite sa verifici pe rand:
+- `owner`
+- `manager`
+- `detailer`
 
-- [ ] can open `Dashboard`
-- [ ] can open `Leads`
-- [ ] can open `Clients`
-- [ ] can open `Services`
-- [ ] can open `Settings`
-- [ ] can create a new lead
-- [ ] can change lead status
-- [ ] can change `follow_up_at`
-- [ ] can add internal notes
+cu acelasi cont, schimband temporar rolul si asignarea unei solicitari demo.
 
-## Manager QA
+## Rezultat Asteptat Dupa Setup
 
-- [ ] can open `Dashboard`
-- [ ] can open `Leads`
-- [ ] can open `Clients`
-- [ ] can open `Services`
-- [ ] does not see `Settings` in navigation
-- [ ] can create a new lead
-- [ ] can change lead status
-- [ ] can change `follow_up_at`
-- [ ] can add internal notes
+- profilul `owner` primeste rolul `owner`
+- profilul `manager` primeste rolul `manager`
+- profilul `detailer` primeste rolul `detailer`
+- o solicitare demo este asignata tehnicianului
+- in timeline apare un eveniment `assigned` pentru acea solicitare
 
-## Detailer QA
+## QA Pentru Proprietar
 
-- [ ] can open `Dashboard`
-- [ ] can open `Leads`
-- [ ] does not see `Clients`
-- [ ] does not see `Services`
-- [ ] does not see `Settings`
-- [ ] does not see `New lead` form
-- [ ] sees only assigned lead(s)
-- [ ] cannot change status
-- [ ] cannot change `follow_up_at`
-- [ ] cannot add internal notes
-- [ ] can view lead timeline/history
+- [ ] poate deschide `Panou`
+- [ ] poate deschide `Solicitari`
+- [ ] poate deschide `Clienti`
+- [ ] poate deschide `Servicii`
+- [ ] poate deschide `Setari`
+- [ ] poate crea o solicitare noua
+- [ ] poate schimba statusul unei solicitari
+- [ ] poate schimba `follow_up_at`
+- [ ] poate adauga notite interne
 
-## Demo Notes
+## QA Pentru Manager
 
-For the cleanest demo:
-- assign one believable lead to the detailer
-- use a lead with realistic service and timeline history
-- show owner first, then manager, then detailer
+- [ ] poate deschide `Panou`
+- [ ] poate deschide `Solicitari`
+- [ ] poate deschide `Clienti`
+- [ ] poate deschide `Servicii`
+- [ ] nu vede `Setari` in navigatie
+- [ ] poate crea o solicitare noua
+- [ ] poate schimba statusul unei solicitari
+- [ ] poate schimba `follow_up_at`
+- [ ] poate adauga notite interne
 
-## Recommended Next Step After QA
+## QA Pentru Tehnician Detailing
 
-After roles are confirmed:
-1. build `public client entry form`
-2. then wire first automation flows in n8n
+- [ ] poate deschide `Panou`
+- [ ] poate deschide `Solicitari`
+- [ ] nu vede `Clienti`
+- [ ] nu vede `Servicii`
+- [ ] nu vede `Setari`
+- [ ] nu vede formularul `Solicitare noua`
+- [ ] vede doar solicitarile asignate
+- [ ] nu poate schimba statusul
+- [ ] nu poate schimba `follow_up_at`
+- [ ] nu poate adauga notite interne
+- [ ] poate vedea timeline-ul si istoricul solicitarii
+
+## Note Pentru Demo
+
+Pentru un demo cat mai clar:
+- asigneaza o solicitare credibila tehnicianului
+- foloseste o solicitare cu serviciu realist si istoric in timeline
+- arata mai intai `owner`, apoi `manager`, apoi `detailer`
+
+## Pasul Recomandat Dupa QA
+
+Dupa confirmarea rolurilor:
+1. mai facem un demo-hardening scurt pe date si flow
+2. apoi continuam cu urmatorul strat de produs: AI assistant sau mobile planning, dar doar peste acest fundament stabil

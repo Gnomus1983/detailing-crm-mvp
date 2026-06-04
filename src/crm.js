@@ -1,4 +1,4 @@
-export async function sendN8nWebhook(webhookUrl, payload, fetchImpl = fetch) {
+export async function sendAutomationWebhook(webhookUrl, payload, fetchImpl = fetch) {
   if (!webhookUrl) {
     return { skipped: true };
   }
@@ -15,7 +15,7 @@ export async function sendN8nWebhook(webhookUrl, payload, fetchImpl = fetch) {
   });
 
   if (!response.ok) {
-    throw new Error(`n8n webhook failed with status ${response.status}`);
+    throw new Error(`automation webhook failed with status ${response.status}`);
   }
 
   return { skipped: false };
@@ -47,28 +47,19 @@ export async function createOrReuseClient(supabaseClient, form) {
     notes: form.comment.trim() || existingClient?.notes || null
   };
 
-  if (existingClient) {
-    const { data, error } = await supabaseClient
-      .from("clients")
-      .update(clientPayload)
-      .eq("id", existingClient.id)
-      .select()
-      .single();
-
-    if (error) {
-      throw error;
-    }
-
-    return { client: data, reused: true };
-  }
-
-  const { data, error } = await supabaseClient.from("clients").insert(clientPayload).select().single();
+  const { data, error } = await supabaseClient
+    .from("clients")
+    .upsert(clientPayload, {
+      onConflict: "phone"
+    })
+    .select()
+    .single();
 
   if (error) {
     throw error;
   }
 
-  return { client: data, reused: false };
+  return { client: data, reused: Boolean(existingClient) };
 }
 
 export async function createLeadRecord(supabaseClient, clientId, form) {
@@ -95,29 +86,36 @@ export async function createLeadRecord(supabaseClient, clientId, form) {
 }
 
 export async function submitPublicLead(supabaseClient, form) {
-  const { data, error } = await supabaseClient.rpc("submit_public_lead", {
-    p_client_name: form.client_name.trim(),
-    p_phone: form.phone.trim(),
-    p_email: form.email.trim() || null,
-    p_service_id: form.service_id || null,
-    p_car_make: form.car_make.trim() || null,
-    p_car_model: form.car_model.trim() || null,
-    p_car_year: form.car_year ? Number(form.car_year) : null,
-    p_car_plate: form.car_plate.trim() || null,
-    p_source: form.source || "landing",
-    p_address: form.address.trim() || null,
-    p_comment: form.comment.trim() || null,
-    p_preferred_date: form.preferred_date || null,
-    p_preferred_time: form.preferred_time.trim() || null,
-    p_estimated_price: form.estimated_price === "" ? null : Number(form.estimated_price),
-    p_follow_up_at: form.follow_up_at ? new Date(form.follow_up_at).toISOString() : null
+  const { data, error } = await supabaseClient.functions.invoke("public-request", {
+    body: {
+      client_name: form.client_name,
+      phone: form.phone,
+      email: form.email,
+      service_id: form.service_id || null,
+      car_make: form.car_make,
+      car_model: form.car_model,
+      car_year: form.car_year,
+      car_plate: form.car_plate,
+      source: form.source || "landing",
+      address: form.address,
+      comment: form.comment,
+      preferred_date: form.preferred_date || null,
+      preferred_time: form.preferred_time,
+      estimated_price: form.estimated_price,
+      follow_up_at: form.follow_up_at || null,
+      website: form.website || ""
+    }
   });
 
   if (error) {
     throw error;
   }
 
-  return data;
+  if (data?.error) {
+    throw new Error(data.error);
+  }
+
+  return data?.result;
 }
 
 export async function updateLeadStatusRecord(supabaseClient, leadId, nextStatus) {

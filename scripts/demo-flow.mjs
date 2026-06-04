@@ -8,7 +8,7 @@ import {
   createLeadEvent,
   createLeadRecord,
   createOrReuseClient,
-  sendN8nWebhook,
+  sendAutomationWebhook,
   updateLeadFollowUpRecord,
   updateLeadStatusRecord
 } from "../src/crm.js";
@@ -41,7 +41,7 @@ const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHAB
   }
 });
 
-const webhookUrl = env.VITE_N8N_WEBHOOK_URL;
+const webhookUrl = env.VITE_AUTOMATION_WEBHOOK_URL || env.VITE_N8N_WEBHOOK_URL;
 const capturedWebhooks = [];
 
 function startMockWebhookServer(urlString) {
@@ -150,7 +150,7 @@ async function main() {
   }
 
   if (!webhookUrl) {
-    throw new Error("Missing VITE_N8N_WEBHOOK_URL in .env.");
+    throw new Error("Missing VITE_AUTOMATION_WEBHOOK_URL in .env. Legacy VITE_N8N_WEBHOOK_URL is still accepted only for backward compatibility.");
   }
 
   const webhookServer = await startMockWebhookServer(webhookUrl);
@@ -181,7 +181,7 @@ async function main() {
       service_id: service.id,
       source: "instagram",
       address: "Ciocana, Chisinau",
-      comment: "Client wants a premium wash before weekend trip.",
+      comment: "Clientul doreste un pachet premium inainte de plecarea din weekend.",
       preferred_date: "2026-06-02",
       preferred_time: "09:30",
       estimated_price: "120",
@@ -194,7 +194,7 @@ async function main() {
     await createLeadEvent(supabase, {
       lead_id: createdLead.id,
       type: "created",
-      note: `Lead created from ${demoForm.source}`,
+      note: `Solicitare creata din sursa ${demoForm.source}`,
       payload: {
         source: demoForm.source,
         service_id: createdLead.service_id,
@@ -213,7 +213,7 @@ async function main() {
       created_by: userId
     });
 
-    await sendN8nWebhook(webhookUrl, {
+    await sendAutomationWebhook(webhookUrl, {
       event: "lead_created",
       lead: createdLead,
       client: createdClient
@@ -269,7 +269,7 @@ async function main() {
       throw refreshedLeadError;
     }
 
-    await sendN8nWebhook(webhookUrl, {
+    await sendAutomationWebhook(webhookUrl, {
       event: "follow_up_updated",
       lead: refreshedLead
     });

@@ -33,45 +33,45 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 function formatLeadReminder(lead: DueLead) {
-  const clientName = lead.clients?.name || "Unknown client";
-  const phone = lead.clients?.phone || "No phone";
-  const service = lead.services?.name || "Service not selected";
+  const clientName = lead.clients?.name || "Client necunoscut";
+  const phone = lead.clients?.phone || "Fara telefon";
+  const service = lead.services?.name || "Serviciu neselectat";
   const source = lead.source || "manual";
-  const followUpAt = lead.follow_up_at || "Not set";
+  const followUpAt = lead.follow_up_at || "Nesetat";
   const preferredSlot = lead.preferred_date
     ? `${lead.preferred_date}${lead.preferred_time ? ` ${lead.preferred_time}` : ""}`
-    : "Not set";
-  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "No car details";
-  const comment = lead.comment || "No comment";
-  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `EUR ${lead.estimated_price}` : "Not estimated";
+    : "Nesetat";
+  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Fara detalii auto";
+  const comment = lead.comment || "Fara comentariu";
+  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `${lead.estimated_price} EUR` : "Neevaluat";
 
   return [
-    "<b>Follow-up due</b>",
+    "<b>Follow-up scadent</b>",
     "",
     `<b>Client:</b> ${escapeTelegramHtml(clientName)}`,
-    `<b>Phone:</b> ${escapeTelegramHtml(phone)}`,
-    `<b>Service:</b> ${escapeTelegramHtml(service)}`,
-    `<b>Source:</b> ${escapeTelegramHtml(source)}`,
-    `<b>Car:</b> ${escapeTelegramHtml(car)}`,
-    `<b>Preferred slot:</b> ${escapeTelegramHtml(preferredSlot)}`,
-    `<b>Follow-up at:</b> ${escapeTelegramHtml(followUpAt)}`,
-    `<b>Estimated price:</b> ${escapeTelegramHtml(price)}`,
-    `<b>Lead ID:</b> ${escapeTelegramHtml(lead.id)}`,
+    `<b>Telefon:</b> ${escapeTelegramHtml(phone)}`,
+    `<b>Serviciu:</b> ${escapeTelegramHtml(service)}`,
+    `<b>Sursa:</b> ${escapeTelegramHtml(source)}`,
+    `<b>Masina:</b> ${escapeTelegramHtml(car)}`,
+    `<b>Interval preferat:</b> ${escapeTelegramHtml(preferredSlot)}`,
+    `<b>Follow-up la:</b> ${escapeTelegramHtml(followUpAt)}`,
+    `<b>Pret estimat:</b> ${escapeTelegramHtml(price)}`,
+    `<b>ID solicitare:</b> ${escapeTelegramHtml(lead.id)}`,
     "",
-    `<b>Comment:</b> ${escapeTelegramHtml(comment)}`
+    `<b>Comentariu:</b> ${escapeTelegramHtml(comment)}`
   ].join("\n");
 }
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Method not allowed" }, 405);
+    return jsonResponse({ error: "Metoda nu este permisa" }, 405);
   }
 
   const internalToken = Deno.env.get("ALERT_INTERNAL_TOKEN");
   if (internalToken) {
     const provided = request.headers.get("x-internal-token");
     if (provided !== internalToken) {
-      return jsonResponse({ error: "Unauthorized" }, 401);
+      return jsonResponse({ error: "Neautorizat" }, 401);
     }
   }
 
@@ -81,7 +81,7 @@ Deno.serve(async (request) => {
   if (!telegramBotToken || !telegramChatId) {
     return jsonResponse(
       {
-        error: "Missing TELEGRAM_BOT_TOKEN or TELEGRAM_MANAGER_CHAT_ID"
+        error: "Lipsesc TELEGRAM_BOT_TOKEN sau TELEGRAM_MANAGER_CHAT_ID"
       },
       500
     );
@@ -145,7 +145,7 @@ Deno.serve(async (request) => {
         scope_key: `${todayKey}:${lead.id}`,
         lead_id: lead.id,
         payload: {
-          reason: "already_sent_today",
+          reason: "deja_trimis_azi",
           day: todayKey
         }
       });
@@ -175,7 +175,7 @@ Deno.serve(async (request) => {
       await supabase.from("lead_events").insert({
         lead_id: lead.id,
         type: "reminder_sent",
-        note: "Telegram follow-up reminder sent to manager.",
+        note: "Reminderul Telegram pentru follow-up a fost trimis managerului.",
         payload: {
           channel: "telegram",
           trigger: "follow_up_due",

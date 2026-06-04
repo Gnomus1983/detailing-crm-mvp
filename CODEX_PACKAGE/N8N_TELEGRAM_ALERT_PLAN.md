@@ -1,14 +1,25 @@
 # N8N TELEGRAM ALERT PLAN
 
+## Archived Note
+
+This document is kept only as historical context.
+
+The active architecture is now:
+- Supabase
+- Edge Functions
+- Cron
+
+`n8n` is no longer the primary automation path for this project.
+
 ## Purpose
 
-This document defines the first practical automation after public lead intake:
+This document defined the first practical automation idea after public lead intake:
 
 `new lead -> n8n webhook -> Telegram alert`
 
 ## Trigger
 
-The CRM already sends `lead_created` webhook events.
+The CRM still supports `lead_created` webhook events for compatibility, but the main production path is now Supabase-native automation.
 
 This can come from:
 - internal CRM new lead form
@@ -20,8 +31,8 @@ This can come from:
 
 ## Current Webhook Source
 
-Frontend sends webhook through:
-- `sendN8nWebhook(...)`
+Frontend sends automation webhook through:
+- `sendAutomationWebhook(...)`
 
 ## Recommended First n8n Flow
 

@@ -5,40 +5,41 @@ import {
   createLeadEvent,
   createLeadRecord,
   createOrReuseClient,
-  sendN8nWebhook,
+  sendAutomationWebhook,
   submitPublicLead,
   updateLeadFollowUpRecord,
   updateLeadStatusRecord
 } from "./crm";
+import detailLogo from "./detailLogo";
 import { supabase } from "./supabase";
 
 const navItems = [
   { to: "/dashboard", label: "Dashboard" },
-  { to: "/leads", label: "Leads" },
-  { to: "/clients", label: "Clients" },
-  { to: "/services", label: "Services" },
-  { to: "/settings", label: "Settings" }
+  { to: "/leads", label: "Заявки" },
+  { to: "/clients", label: "Клиенты" },
+  { to: "/tasks", label: "Задачи" },
+  { to: "/settings", label: "Настройки" }
 ];
 
 const roleLabels = {
-  owner: "Owner",
-  manager: "Manager",
-  detailer: "Detailer"
+  owner: "Директор",
+  manager: "Менеджер",
+  detailer: "Мастер"
 };
 
 const rolePermissions = {
   owner: {
-    nav: ["/dashboard", "/leads", "/clients", "/services", "/settings"],
+    nav: ["/dashboard", "/leads", "/clients", "/tasks", "/settings"],
     canCreateLead: true,
     canEditLead: true
   },
   manager: {
-    nav: ["/dashboard", "/leads", "/clients", "/services"],
+    nav: ["/dashboard", "/leads", "/clients", "/tasks"],
     canCreateLead: true,
     canEditLead: true
   },
   detailer: {
-    nav: ["/dashboard", "/leads"],
+    nav: ["/dashboard", "/leads", "/tasks"],
     canCreateLead: false,
     canEditLead: false
   }
@@ -46,33 +47,61 @@ const rolePermissions = {
 
 const statusOptions = ["new", "contacted", "quoted", "scheduled", "in_progress", "done", "lost"];
 const sourceOptions = ["manual", "landing", "instagram", "telegram", "whatsapp", "phone", "facebook", "other"];
+const clientTabs = ["history", "leads", "notes"];
+const settingsSections = ["profile", "team", "billing", "integrations", "security"];
 
 const statusLabels = {
-  new: "New",
-  contacted: "Contacted",
-  quoted: "Quoted",
-  scheduled: "Scheduled",
-  in_progress: "In progress",
-  done: "Done",
-  lost: "Lost"
+  new: "Новая",
+  contacted: "Связались",
+  quoted: "Предложение",
+  scheduled: "Запланировано",
+  in_progress: "В работе",
+  done: "Готово",
+  lost: "Отменено"
+};
+
+const statusGroupLabels = {
+  new: "Новые",
+  in_progress: "В работе",
+  done: "Готово",
+  lost: "Отменено"
 };
 
 const eventLabels = {
-  created: "Lead created",
-  status_changed: "Status changed",
-  note_added: "Note added",
-  follow_up_set: "Follow-up updated",
-  assigned: "Assigned",
-  price_updated: "Price updated",
-  reminder_sent: "Reminder sent"
+  created: "Заявка создана",
+  status_changed: "Статус изменён",
+  note_added: "Добавлена заметка",
+  follow_up_set: "Follow-up обновлён",
+  assigned: "Назначено",
+  price_updated: "Обновлена сумма",
+  reminder_sent: "Отправлено напоминание"
+};
+
+const sourceLabels = {
+  manual: "Вручную",
+  landing: "Лендинг",
+  instagram: "Instagram",
+  telegram: "Telegram",
+  whatsapp: "WhatsApp",
+  phone: "Телефон",
+  facebook: "Facebook",
+  other: "Другое"
+};
+
+const settingsSectionLabels = {
+  profile: "Профиль",
+  team: "Команда",
+  billing: "Тарифы",
+  integrations: "Интеграции",
+  security: "Безопасность"
 };
 
 function formatCurrency(value) {
   if (value == null || value === "") {
-    return "EUR 0";
+    return "0 EUR";
   }
 
-  return new Intl.NumberFormat("en-IE", {
+  return new Intl.NumberFormat("ru-RU", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0
@@ -81,12 +110,23 @@ function formatCurrency(value) {
 
 function formatDate(value) {
   if (!value) {
-    return "Not set";
+    return "Не задано";
   }
 
-  return new Intl.DateTimeFormat("en-GB", {
+  return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium",
     timeStyle: "short"
+  }).format(new Date(value));
+}
+
+function formatShortDate(value) {
+  if (!value) {
+    return "—";
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "short"
   }).format(new Date(value));
 }
 
@@ -103,7 +143,11 @@ function formatDateTimeLocal(value) {
 
 function formatLabel(value) {
   if (!value) {
-    return "Not set";
+    return "Не задано";
+  }
+
+  if (sourceLabels[value]) {
+    return sourceLabels[value];
   }
 
   return value
@@ -114,18 +158,30 @@ function formatLabel(value) {
 
 function formatPreferredSlot(dateValue, timeValue) {
   if (!dateValue) {
-    return "Not set";
+    return "Не согласовано";
   }
 
-  const formattedDate = new Intl.DateTimeFormat("en-GB", {
+  const formattedDate = new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "medium"
   }).format(new Date(`${dateValue}T00:00:00`));
 
-  return `${formattedDate} ${timeValue || "Time TBD"}`;
+  return `${formattedDate}${timeValue ? `, ${timeValue}` : ""}`;
 }
 
 function getRolePermissions(role) {
   return rolePermissions[role] || rolePermissions.manager;
+}
+
+function getRoleAccessSummary(role) {
+  if (role === "owner") {
+    return "Полный доступ к CRM, команде, настройкам и автоматизациям.";
+  }
+
+  if (role === "detailer") {
+    return "Видит только назначенные заявки и рабочую историю клиента.";
+  }
+
+  return "Управляет заявками, клиентами и задачами без доступа к системным настройкам.";
 }
 
 function getInitialLeadForm(services) {
@@ -146,6 +202,70 @@ function getInitialLeadForm(services) {
     estimated_price: "",
     follow_up_at: ""
   };
+}
+
+function getInitials(value) {
+  if (!value) {
+    return "DM";
+  }
+
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  return parts
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("");
+}
+
+function getLeadStageKey(status) {
+  if (status === "new") {
+    return "new";
+  }
+
+  if (status === "done") {
+    return "done";
+  }
+
+  if (status === "lost") {
+    return "lost";
+  }
+
+  return "in_progress";
+}
+
+function isStageHighlighted(stageKey) {
+  return stageKey === "in_progress";
+}
+
+function Avatar({ name, large = false }) {
+  return (
+    <span className={large ? "avatar avatar-large" : "avatar"}>
+      {getInitials(name)}
+    </span>
+  );
+}
+
+function StatusBadge({ status }) {
+  const group = getLeadStageKey(status);
+  return (
+    <span className={`status-badge status-group-${group}`}>
+      {statusLabels[status] || status}
+    </span>
+  );
+}
+
+function MiniIcon({ label, accent = false }) {
+  return <span className={accent ? "mini-icon accent" : "mini-icon"}>{label}</span>;
+}
+
+function LogoWordmark({ inverse = false }) {
+  return (
+    <div className={inverse ? "logo-wordmark inverse" : "logo-wordmark"}>
+      <img src={detailLogo} alt="DETAIL CRM" className="logo-mark" />
+      <div className="logo-copy">
+        <strong>DETAIL CRM</strong>
+      </div>
+    </div>
+  );
 }
 
 function LoginPage({ onAuthenticated }) {
@@ -179,7 +299,7 @@ function LoginPage({ onAuthenticated }) {
           throw signUpError;
         }
 
-        setMessage("Account created. If email confirmation is enabled, confirm your inbox and sign in.");
+        setMessage("Аккаунт создан. Если у проекта включено подтверждение почты, подтвердите email и затем войдите.");
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -193,7 +313,7 @@ function LoginPage({ onAuthenticated }) {
         onAuthenticated(data.session);
       }
     } catch (submitError) {
-      setError(submitError.message || "Authentication failed.");
+      setError(submitError.message || "Не удалось войти в систему.");
     } finally {
       setLoading(false);
     }
@@ -201,33 +321,32 @@ function LoginPage({ onAuthenticated }) {
 
   return (
     <div className="auth-shell">
-      <div className="auth-panel">
-        <div className="auth-brand">
-          <span className="auth-kicker">Detailing CRM MVP</span>
-          <h1>Run your detailing leads like a real front desk.</h1>
-          <p>
-            Sign in to manage new requests, track follow-ups, and keep every car lead moving toward booking.
-          </p>
-        </div>
+      <div className="auth-split">
+        <section className="auth-main-card">
+          <LogoWordmark />
 
-        <div className="auth-card">
-          <div className="auth-tabs">
+          <div className="auth-copy">
+            <h1>Вход в систему</h1>
+            <p>Управляйте заявками, клиентами и follow-up без лишней перегрузки.</p>
+          </div>
+
+          <div className="auth-switch">
             <button type="button" className={mode === "sign-in" ? "active" : ""} onClick={() => setMode("sign-in")}>
-              Sign in
+              Вход
             </button>
             <button type="button" className={mode === "sign-up" ? "active" : ""} onClick={() => setMode("sign-up")}>
-              Create account
+              Регистрация
             </button>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             {mode === "sign-up" ? (
               <label>
-                Full name
+                Имя
                 <input
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="Owner or manager name"
+                  placeholder="Имя владельца или менеджера"
                   required
                 />
               </label>
@@ -245,24 +364,44 @@ function LoginPage({ onAuthenticated }) {
             </label>
 
             <label>
-              Password
+              Пароль
               <input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Minimum 6 characters"
+                placeholder="Минимум 6 символов"
                 required
               />
             </label>
 
-            <button type="submit" className="primary-button" disabled={loading}>
-              {loading ? "Please wait..." : mode === "sign-up" ? "Create account" : "Sign in"}
+            <button type="submit" className="button button-primary button-full" disabled={loading}>
+              {loading ? "Выполняется вход..." : mode === "sign-up" ? "Создать аккаунт" : "Войти"}
             </button>
           </form>
 
+          <div className="auth-divider">
+            <span>или</span>
+          </div>
+
+          <button type="button" className="button button-outline button-full" disabled>
+            Продолжить через Google
+          </button>
+
           {message ? <p className="status-note success">{message}</p> : null}
           {error ? <p className="status-note error">{error}</p> : null}
-        </div>
+        </section>
+
+        <aside className="auth-side-card">
+          <div className="auth-side-top">
+            <LogoWordmark inverse />
+          </div>
+          <div className="auth-side-quote">
+            <p>
+              “Система наконец-то собрала заявки, follow-up и команду в одном месте. Стало понятно, кто ведёт клиента и что делать дальше.”
+            </p>
+            <span>Юрий, владелец детейлинг-центра</span>
+          </div>
+        </aside>
       </div>
     </div>
   );
@@ -289,9 +428,10 @@ function PublicRequestPage({ isAuthenticated }) {
     preferred_date: "",
     preferred_time: "",
     estimated_price: "",
-    follow_up_at: ""
+    follow_up_at: "",
+    website: ""
   });
-  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+  const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
 
   useEffect(() => {
     let active = true;
@@ -309,7 +449,7 @@ function PublicRequestPage({ isAuthenticated }) {
       }
 
       if (servicesError) {
-        setError(servicesError.message || "Failed to load services.");
+        setError(servicesError.message || "Не удалось загрузить услуги.");
       } else {
         setServices(data || []);
         setForm((current) => ({
@@ -346,7 +486,7 @@ function PublicRequestPage({ isAuthenticated }) {
       const result = await submitPublicLead(supabase, form);
 
       try {
-        await sendN8nWebhook(webhookUrl, {
+        await sendAutomationWebhook(automationWebhookUrl, {
           event: "lead_created",
           public_entry: true,
           lead: result,
@@ -358,10 +498,10 @@ function PublicRequestPage({ isAuthenticated }) {
           }
         });
       } catch (webhookError) {
-        setError(webhookError.message || "Request was created, but n8n webhook failed.");
+        setError(webhookError.message || "Заявка создана, но внешний webhook автоматизации не отработал.");
       }
 
-      setSuccessMessage("Request sent successfully. The detailing team can now follow up from the CRM.");
+      setSuccessMessage("Заявка успешно отправлена. Менеджер уже может обработать её в CRM.");
       setForm({
         client_name: "",
         phone: "",
@@ -377,10 +517,11 @@ function PublicRequestPage({ isAuthenticated }) {
         preferred_date: "",
         preferred_time: "",
         estimated_price: "",
-        follow_up_at: ""
+        follow_up_at: "",
+        website: ""
       });
     } catch (submitError) {
-      setError(submitError.message || "Failed to send request.");
+      setError(submitError.message || "Не удалось отправить заявку.");
     } finally {
       setSaving(false);
     }
@@ -388,41 +529,42 @@ function PublicRequestPage({ isAuthenticated }) {
 
   return (
     <div className="public-shell">
-      <section className="public-hero">
-        <div className="public-hero-copy">
-          <span className="page-kicker">Detailing request</span>
-          <h1>Book your car detailing request in one step.</h1>
+      <section className="public-landing-card">
+        <div className="public-copy-column">
+          <LogoWordmark />
+          <span className="eyebrow">Онлайн-заявка</span>
+          <h1>Запишитесь на детейлинг без звонков и ожидания.</h1>
           <p>
-            Send your preferred service, car details, and timing. The team will receive the request in the CRM and follow up quickly.
+            Оставьте контакт, услугу и удобный слот. CRM сразу создаст карточку клиента, заявку и follow-up для команды.
           </p>
-          <div className="public-badges">
-            <span>Fast intake</span>
-            <span>CRM synced</span>
-            <span>Follow-up ready</span>
+          <div className="public-pill-row">
+            <span>Быстрый контакт</span>
+            <span>CRM-синхронизация</span>
+            <span>Автономный follow-up</span>
           </div>
-          {isAuthenticated ? <p className="public-helper">You are signed in. After submit, you can review the new lead inside the CRM workspace.</p> : null}
+          {isAuthenticated ? <p className="public-auth-hint">Вы уже вошли в CRM и увидите новую заявку сразу после отправки.</p> : null}
         </div>
 
-        <div className="public-card">
-          <div className="section-heading compact">
+        <div className="public-form-card">
+          <div className="section-title">
             <div>
-              <span className="page-kicker">Public form</span>
-              <h3>Request detailing</h3>
+              <span className="eyebrow">Форма клиента</span>
+              <h2>Новая заявка</h2>
             </div>
           </div>
 
-          {loadingServices ? <p className="access-note">Loading available services...</p> : null}
-          {error ? <div className="banner error">{error}</div> : null}
-          {successMessage ? <div className="banner success">{successMessage}</div> : null}
+          {loadingServices ? <p className="hint-text">Загружаем доступные услуги...</p> : null}
+          {error ? <div className="notice notice-error">{error}</div> : null}
+          {successMessage ? <div className="notice notice-success">{successMessage}</div> : null}
 
-          <form className="inline-form" onSubmit={handleSubmit}>
+          <form className="form-grid-shell" onSubmit={handleSubmit}>
             <div className="form-grid two-columns">
               <label>
-                Full name
+                Имя
                 <input name="client_name" value={form.client_name} onChange={updateField} placeholder="Victor Sandu" required />
               </label>
               <label>
-                Phone
+                Телефон
                 <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
               </label>
               <label>
@@ -430,9 +572,9 @@ function PublicRequestPage({ isAuthenticated }) {
                 <input name="email" type="email" value={form.email} onChange={updateField} placeholder="optional@email.com" />
               </label>
               <label>
-                Service
+                Услуга
                 <select name="service_id" value={form.service_id} onChange={updateField} disabled={loadingServices}>
-                  <option value="">Choose a service</option>
+                  <option value="">Выберите услугу</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>
                       {service.name}
@@ -441,47 +583,58 @@ function PublicRequestPage({ isAuthenticated }) {
                 </select>
               </label>
               <label>
-                Car make
+                Марка
                 <input name="car_make" value={form.car_make} onChange={updateField} placeholder="Audi" />
               </label>
               <label>
-                Model / year
+                Модель / год
                 <div className="split-input">
                   <input name="car_model" value={form.car_model} onChange={updateField} placeholder="Q7" />
                   <input name="car_year" type="number" min="1950" max="2100" value={form.car_year} onChange={updateField} placeholder="2020" />
                 </div>
               </label>
               <label>
-                Plate
+                Номер авто
                 <input name="car_plate" value={form.car_plate} onChange={updateField} placeholder="KCC777" />
               </label>
               <label>
-                Preferred date
+                Желаемая дата
                 <input name="preferred_date" type="date" value={form.preferred_date} onChange={updateField} />
               </label>
               <label>
-                Preferred time
-                <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="After 18:00" />
+                Желаемое время
+                <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="После 18:00" />
               </label>
               <label>
-                Address
+                Адрес
                 <input name="address" value={form.address} onChange={updateField} placeholder="Ciocana, Chisinau" />
               </label>
             </div>
 
             <label>
-              Request details
+              Комментарий
               <textarea
                 name="comment"
                 value={form.comment}
                 onChange={updateField}
                 rows="4"
-                placeholder="Tell us what service you need, the car condition, and any timing details."
+                placeholder="Опишите желаемую услугу, состояние авто и пожелания."
               />
             </label>
 
-            <button type="submit" className="primary-button" disabled={saving || loadingServices}>
-              {saving ? "Sending request..." : "Send request"}
+            <input
+              type="text"
+              name="website"
+              value={form.website}
+              onChange={updateField}
+              tabIndex="-1"
+              autoComplete="off"
+              aria-hidden="true"
+              className="honeypot-field"
+            />
+
+            <button type="submit" className="button button-primary" disabled={saving || loadingServices}>
+              {saving ? "Отправляем..." : "Отправить заявку"}
             </button>
           </form>
         </div>
@@ -490,119 +643,133 @@ function PublicRequestPage({ isAuthenticated }) {
   );
 }
 
-function AppLayout({ session, metrics, role, children, onSignOut }) {
+function TopBar({ session, role, permissions, onSignOut }) {
   const location = useLocation();
-  const permissions = getRolePermissions(role);
-  const allowedNavItems = navItems.filter((item) => permissions.nav.includes(item.to));
+  const centerNavItems = navItems.filter((item) => item.to !== "/settings" && permissions.nav.includes(item.to));
+  const fullName = session.user.user_metadata?.full_name || session.user.email;
 
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div>
-          <div className="brand-block">
-            <span className="brand-badge">DC</span>
-            <div>
-              <strong>Detailing CRM</strong>
-              <span>MVP control room</span>
-            </div>
-          </div>
+    <header className="topbar">
+      <div className="topbar-left">
+        <LogoWordmark />
+      </div>
 
-          <nav className="sidebar-nav">
-            {allowedNavItems.map((item) => (
-              <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}>
-                {item.label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
+      <nav className="topbar-nav">
+        {centerNavItems.map((item) => (
+          <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? "topbar-link active" : "topbar-link")}>
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
 
-        <div className="sidebar-footer">
-          <div className="user-card">
+      <div className="topbar-actions">
+        {permissions.canCreateLead ? (
+          <NavLink to="/leads" className="button button-primary topbar-cta">
+            Новая заявка
+          </NavLink>
+        ) : null}
+        {permissions.nav.includes("/settings") ? (
+          <NavLink
+            to="/settings"
+            className={({ isActive }) => (isActive ? "button button-outline active-outline" : "button button-outline")}
+          >
+            Настройки
+          </NavLink>
+        ) : null}
+        <div className="topbar-user">
+          <div className="user-meta">
             <strong>{roleLabels[role] || roleLabels.manager}</strong>
-            <span>{session.user.email}</span>
-            <button type="button" onClick={onSignOut}>
-              Sign out
-            </button>
+            <span>{fullName}</span>
           </div>
+          <Avatar name={fullName} />
+          <button type="button" className="ghost-action" onClick={onSignOut}>
+            Выйти
+          </button>
         </div>
-      </aside>
+      </div>
+    </header>
+  );
+}
 
-      <main className="content">
-        <header className="topbar">
-          <div>
-            <span className="page-kicker">Live workspace</span>
-            <h2>{allowedNavItems.find((item) => location.pathname.startsWith(item.to))?.label || "Dashboard"}</h2>
-          </div>
+function AppLayout({ session, metrics, role, children, onSignOut }) {
+  const permissions = getRolePermissions(role);
 
-          <div className="topbar-chip">
-            <span>{metrics.newCount} new</span>
-            <span>{metrics.followUpCount} follow-ups</span>
-          </div>
-        </header>
+  return (
+    <div className="crm-shell">
+      <TopBar session={session} role={role} permissions={permissions} onSignOut={onSignOut} />
 
+      <main className="crm-main">
+        <div className="crm-summary-bar">
+          <span>{metrics.newCount} новых</span>
+          <span>{metrics.openTasks} открытых задач</span>
+          <span>{metrics.followUpCount} pending follow-up</span>
+        </div>
         {children}
       </main>
     </div>
   );
 }
 
-function DashboardPage({ metrics, leads, role }) {
+function MetricCard({ icon, label, value, accent = false }) {
   return (
-    <section className="page-grid">
-      <div className="stats-grid">
-        <article className="stat-card">
-          <span>New leads</span>
-          <strong>{metrics.newCount}</strong>
-          <p>Fresh requests that still need a first response.</p>
-        </article>
-        <article className="stat-card">
-          <span>In progress</span>
-          <strong>{metrics.activeCount}</strong>
-          <p>Deals moving through quote, schedule, or active service.</p>
-        </article>
-        <article className="stat-card">
-          <span>Done value</span>
-          <strong>{formatCurrency(metrics.doneRevenue)}</strong>
-          <p>Total value marked as completed in the current dataset.</p>
-        </article>
-        <article className="stat-card">
-          <span>Follow-ups due</span>
-          <strong>{metrics.followUpCount}</strong>
-          <p>Requests that should be nudged before they cool down.</p>
-        </article>
+    <article className={accent ? "metric-card accent" : "metric-card"}>
+      <MiniIcon label={icon} accent={accent} />
+      <strong>{value}</strong>
+      <span>{label}</span>
+    </article>
+  );
+}
+
+function DashboardPage({ metrics, leads, onOpenLead }) {
+  return (
+    <section className="page-stack">
+      <div className="metrics-grid">
+        <MetricCard icon="CL" label="Всего клиентов" value={metrics.clientsCount} accent />
+        <MetricCard icon="TD" label="Заявки сегодня" value={metrics.todayLeads} />
+        <MetricCard icon="€" label="Выручка месяц" value={formatCurrency(metrics.monthRevenue)} />
+        <MetricCard icon="TK" label="Задачи открыты" value={metrics.openTasks} />
       </div>
 
-      <div className="feature-panel">
-        <div className="section-heading">
+      <section className="surface-card">
+        <div className="section-title">
           <div>
-            <span className="page-kicker">Priority queue</span>
-            <h3>{role === "detailer" ? "Assigned jobs" : "Next moves for the desk"}</h3>
+            <span className="eyebrow">Live pipeline</span>
+            <h2>Последние заявки</h2>
           </div>
         </div>
 
-        <div className="priority-list">
+        <div className="data-table">
+          <div className="table-head">
+            <span>Клиент</span>
+            <span>Услуга</span>
+            <span>Статус</span>
+            <span>Дата</span>
+            <span>Сумма</span>
+            <span>Действие</span>
+          </div>
+
           {leads.length ? (
-            leads.slice(0, 4).map((lead) => (
-              <article className="priority-item" key={lead.id}>
-                <div>
-                  <strong>{lead.clients?.name || "Unknown client"}</strong>
-                  <span>{lead.services?.name || "No service selected"}</span>
-                </div>
-                <div className="priority-meta">
-                  <span className={`status-pill status-${lead.status}`}>{statusLabels[lead.status] || lead.status}</span>
-                  <span>{lead.preferred_time || "Time not set"}</span>
-                </div>
-              </article>
+            leads.slice(0, 6).map((lead) => (
+              <div key={lead.id} className="table-body-row">
+                <span className="cell-strong">{lead.clients?.name || "Без имени"}</span>
+                <span>{lead.services?.name || "Не выбрана"}</span>
+                <span>
+                  <StatusBadge status={lead.status} />
+                </span>
+                <span>{formatShortDate(lead.created_at)}</span>
+                <span className="amount-cell">{formatCurrency(lead.estimated_price)}</span>
+                <span>
+                  <NavLink to="/leads" className="table-link" onClick={() => onOpenLead(lead.id)}>
+                    Открыть
+                  </NavLink>
+                </span>
+              </div>
             ))
           ) : (
-            <div className="table-empty">
-              {role === "detailer"
-                ? "No assigned jobs yet. When a lead is assigned to this detailer, it will appear here."
-                : "No leads in the queue yet."}
-            </div>
+            <div className="table-empty-state">Пока нет заявок для отображения.</div>
           )}
         </div>
-      </div>
+      </section>
     </section>
   );
 }
@@ -634,23 +801,22 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
   }
 
   return (
-    <div className="feature-panel">
-      <div className="section-heading compact">
+    <section className="surface-card">
+      <div className="section-title">
         <div>
-          <span className="page-kicker">New request</span>
-          <h3>New lead</h3>
-          <p className="section-subcopy">Create a realistic inbound request and the CRM will reuse the client by phone if they already exist.</p>
+          <span className="eyebrow">Добавление</span>
+          <h2>Новая заявка</h2>
         </div>
       </div>
 
-      <form className="inline-form" onSubmit={handleSubmit}>
+      <form className="form-grid-shell" onSubmit={handleSubmit}>
         <div className="form-grid two-columns">
           <label>
-            Client name
+            Имя клиента
             <input name="client_name" value={form.client_name} onChange={updateField} placeholder="Andrei Popa" required />
           </label>
           <label>
-            Phone
+            Телефон
             <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
           </label>
           <label>
@@ -658,9 +824,9 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             <input name="email" type="email" value={form.email} onChange={updateField} placeholder="optional@email.com" />
           </label>
           <label>
-            Service
+            Услуга
             <select name="service_id" value={form.service_id} onChange={updateField}>
-              <option value="">No service yet</option>
+              <option value="">Без услуги</option>
               {services.map((service) => (
                 <option key={service.id} value={service.id}>
                   {service.name}
@@ -669,7 +835,7 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             </select>
           </label>
           <label>
-            Source
+            Источник
             <select name="source" value={form.source} onChange={updateField}>
               {sourceOptions.map((source) => (
                 <option key={source} value={source}>
@@ -679,31 +845,31 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             </select>
           </label>
           <label>
-            Estimated price
+            Сумма
             <input name="estimated_price" type="number" min="0" value={form.estimated_price} onChange={updateField} placeholder="120" />
           </label>
           <label>
-            Preferred date
+            Дата
             <input name="preferred_date" type="date" value={form.preferred_date} onChange={updateField} />
           </label>
           <label>
-            Preferred time
-            <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="After 18:00" />
+            Время
+            <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="После 18:00" />
           </label>
           <label>
-            Follow-up at
+            Follow-up
             <input name="follow_up_at" type="datetime-local" value={form.follow_up_at} onChange={updateField} />
           </label>
           <label>
-            Plate
+            Номер авто
             <input name="car_plate" value={form.car_plate} onChange={updateField} placeholder="KAA123" />
           </label>
           <label>
-            Make
+            Марка
             <input name="car_make" value={form.car_make} onChange={updateField} placeholder="BMW" />
           </label>
           <label>
-            Model / year
+            Модель / год
             <div className="split-input">
               <input name="car_model" value={form.car_model} onChange={updateField} placeholder="X5" />
               <input name="car_year" type="number" min="1950" max="2100" value={form.car_year} onChange={updateField} placeholder="2019" />
@@ -712,26 +878,36 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
         </div>
 
         <label>
-          Address
+          Адрес
           <input name="address" value={form.address} onChange={updateField} placeholder="Botanica, Chisinau" />
         </label>
 
         <label>
-          Lead comment
-          <textarea
-            name="comment"
-            value={form.comment}
-            onChange={updateField}
-            rows="4"
-            placeholder="What the client asked for, urgency, expectations..."
-          />
+          Комментарий
+          <textarea name="comment" value={form.comment} onChange={updateField} rows="4" placeholder="Что попросил клиент, срочность, ожидания..." />
         </label>
 
-        <button type="submit" className="primary-button" disabled={creatingLead}>
-          {creatingLead ? "Creating..." : "Create lead"}
+        <button type="submit" className="button button-primary" disabled={creatingLead}>
+          {creatingLead ? "Создаём..." : "Добавить заявку"}
         </button>
       </form>
-    </div>
+    </section>
+  );
+}
+
+function LeadCard({ lead, isActive, onClick }) {
+  return (
+    <button type="button" className={isActive ? "lead-kanban-card active" : "lead-kanban-card"} onClick={onClick}>
+      <div className="lead-kanban-header">
+        <strong>{lead.clients?.name || "Без имени"}</strong>
+        <Avatar name={lead.clients?.name || "Client"} />
+      </div>
+      <span>{lead.services?.name || "Услуга не выбрана"}</span>
+      <div className="lead-kanban-footer">
+        <strong>{formatCurrency(lead.estimated_price)}</strong>
+        <small>{formatShortDate(lead.created_at)}</small>
+      </div>
+    </button>
   );
 }
 
@@ -742,8 +918,6 @@ function LeadsPage({
   currentUserName,
   permissions,
   emptyMessage,
-  statusFilter,
-  setStatusFilter,
   selectedLeadId,
   setSelectedLeadId,
   createLead,
@@ -753,13 +927,40 @@ function LeadsPage({
   updateLeadFollowUp,
   addLeadNote
 }) {
+  const [search, setSearch] = useState("");
+  const [showComposer, setShowComposer] = useState(true);
+
   const filteredLeads = useMemo(() => {
-    if (statusFilter === "all") {
+    const query = search.trim().toLowerCase();
+    if (!query) {
       return leads;
     }
 
-    return leads.filter((lead) => lead.status === statusFilter);
-  }, [leads, statusFilter]);
+    return leads.filter((lead) => {
+      const haystack = [
+        lead.clients?.name,
+        lead.clients?.phone,
+        lead.services?.name,
+        lead.comment,
+        lead.car_plate
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [leads, search]);
+
+  const groupedLeads = useMemo(
+    () => ({
+      new: filteredLeads.filter((lead) => getLeadStageKey(lead.status) === "new"),
+      in_progress: filteredLeads.filter((lead) => getLeadStageKey(lead.status) === "in_progress"),
+      done: filteredLeads.filter((lead) => getLeadStageKey(lead.status) === "done"),
+      lost: filteredLeads.filter((lead) => getLeadStageKey(lead.status) === "lost")
+    }),
+    [filteredLeads]
+  );
 
   const selectedLead = filteredLeads.find((lead) => lead.id === selectedLeadId) || filteredLeads[0] || null;
   const selectedLeadEvents = useMemo(
@@ -774,63 +975,89 @@ function LeadsPage({
   }, [filteredLeads, selectedLead, setSelectedLeadId]);
 
   return (
-    <section className="page-grid">
-      {permissions.canCreateLead ? <NewLeadForm services={services} onCreateLead={createLead} creatingLead={creatingLead} /> : null}
-
-      <section className="page-grid leads-layout">
-        <div className="feature-panel">
-          <div className="section-heading compact">
-            <div>
-              <span className="page-kicker">Pipeline</span>
-              <h3>Lead queue</h3>
-            </div>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option value="all">All statuses</option>
-              {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {statusLabels[status] || status}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="table-list">
-            {filteredLeads.length ? (
-              filteredLeads.map((lead) => (
-                <button
-                  type="button"
-                  key={lead.id}
-                  className={lead.id === selectedLead?.id ? "table-row active" : "table-row"}
-                  onClick={() => setSelectedLeadId(lead.id)}
-                >
-                  <div>
-                    <strong>{lead.clients?.name}</strong>
-                    <span>{lead.services?.name || "No service"}</span>
-                  </div>
-                  <div className="table-meta">
-                    <span className={`status-pill status-${lead.status}`}>{statusLabels[lead.status] || lead.status}</span>
-                    <span>{formatCurrency(lead.estimated_price)}</span>
-                  </div>
-                </button>
-              ))
-            ) : (
-              <div className="table-empty">{leads.length ? "No leads match this status yet." : emptyMessage}</div>
-            )}
-          </div>
+    <section className="page-stack">
+      <div className="page-header">
+        <div>
+          <h1>Заявки</h1>
+          <p>Pipeline заявок, быстрый выбор клиента и рабочая карточка справа.</p>
         </div>
+        <div className="page-header-actions">
+          {permissions.canCreateLead ? (
+            <button type="button" className="button button-primary" onClick={() => setShowComposer((current) => !current)}>
+              Добавить заявку
+            </button>
+          ) : null}
+          <input
+            className="search-input"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Поиск по клиенту, услуге, номеру"
+          />
+        </div>
+      </div>
 
-        <LeadDetailCard
-          lead={selectedLead}
-          leadEvents={selectedLeadEvents}
-          currentUserName={currentUserName}
-          permissions={permissions}
-          statusSavingId={statusSavingId}
-          updateLeadStatus={updateLeadStatus}
-          updateLeadFollowUp={updateLeadFollowUp}
-          addLeadNote={addLeadNote}
-        />
-      </section>
+      {permissions.canCreateLead && showComposer ? <NewLeadForm services={services} onCreateLead={createLead} creatingLead={creatingLead} /> : null}
+
+      {!permissions.canCreateLead ? (
+        <section className="surface-card compact-note-card">
+          <span className="eyebrow">Роль</span>
+          <h2>Операционный доступ</h2>
+          <p>Мастер видит только назначенные заявки. Статусы, follow-up и внутренние заметки остаются у менеджера и директора.</p>
+        </section>
+      ) : null}
+
+      <div className="kanban-grid">
+        {["new", "in_progress", "done", "lost"].map((columnKey) => (
+          <section key={columnKey} className={isStageHighlighted(columnKey) ? "kanban-column active" : "kanban-column"}>
+            <div className="kanban-column-head">
+              <strong>{statusGroupLabels[columnKey]}</strong>
+              <span>{groupedLeads[columnKey].length}</span>
+            </div>
+            <div className="kanban-list">
+              {groupedLeads[columnKey].length ? (
+                groupedLeads[columnKey].map((lead) => (
+                  <LeadCard
+                    key={lead.id}
+                    lead={lead}
+                    isActive={lead.id === selectedLead?.id}
+                    onClick={() => setSelectedLeadId(lead.id)}
+                  />
+                ))
+              ) : (
+                <div className="kanban-empty">{leads.length ? "Нет карточек в этой колонке." : emptyMessage}</div>
+              )}
+            </div>
+          </section>
+        ))}
+      </div>
+
+      <LeadDetailCard
+        lead={selectedLead}
+        leadEvents={selectedLeadEvents}
+        currentUserName={currentUserName}
+        permissions={permissions}
+        statusSavingId={statusSavingId}
+        updateLeadStatus={updateLeadStatus}
+        updateLeadFollowUp={updateLeadFollowUp}
+        addLeadNote={addLeadNote}
+      />
     </section>
+  );
+}
+
+function TimelineEvent({ item, currentUserName }) {
+  return (
+    <article className="timeline-event">
+      <span className="timeline-dot" />
+      <div className="timeline-content">
+        <div className="timeline-meta">
+          <strong>{eventLabels[item.type] || item.type}</strong>
+          <span>{formatDate(item.created_at)}</span>
+        </div>
+        <p>{item.note || "Без дополнительного комментария."}</p>
+        <small>{item.created_by ? currentUserName || "Команда CRM" : "Система"}</small>
+      </div>
+    </article>
   );
 }
 
@@ -847,10 +1074,10 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, status
 
   if (!lead) {
     return (
-      <div className="detail-panel empty">
-        <h3>No lead selected</h3>
-        <p>Create or filter leads, and the selected request will appear here.</p>
-      </div>
+      <section className="surface-card detail-empty-card">
+        <h2>Заявка не выбрана</h2>
+        <p>Выберите карточку из pipeline, и здесь откроется полная информация по клиенту и работе.</p>
+      </section>
     );
   }
 
@@ -888,182 +1115,382 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, status
     setSavingNote(false);
   }
 
+  const noteEvents = leadEvents.filter((eventItem) => eventItem.type === "note_added");
+
   return (
-    <div className="detail-panel">
-      <div className="section-heading compact">
-        <div>
-          <span className="page-kicker">Lead card</span>
-          <h3>{lead.clients?.name}</h3>
-        </div>
-        <span className={`status-pill status-${lead.status}`}>{statusLabels[lead.status] || lead.status}</span>
-      </div>
-
-      <div className="detail-grid">
-        <div>
-          <span>Phone</span>
-          <strong>{lead.clients?.phone || "No phone"}</strong>
-        </div>
-        <div>
-          <span>Service</span>
-          <strong>{lead.services?.name || "Not chosen"}</strong>
-        </div>
-        <div>
-          <span>Car</span>
-          <strong>
-            {[lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "No car details"}
-          </strong>
-        </div>
-        <div>
-          <span>Source</span>
-          <strong>{formatLabel(lead.source)}</strong>
-        </div>
-        <div>
-          <span>Preferred slot</span>
-          <strong>{formatPreferredSlot(lead.preferred_date, lead.preferred_time)}</strong>
-        </div>
-        <div>
-          <span>Follow-up</span>
-          <strong>{lead.follow_up_at ? formatDate(lead.follow_up_at) : "Not set"}</strong>
-        </div>
-      </div>
-
-      <div className="detail-block">
-        <span>Address</span>
-        <p>{lead.address || "No address added yet."}</p>
-      </div>
-
-      <div className="detail-block">
-        <span>Comment</span>
-        <p>{lead.comment || "No client comment."}</p>
-      </div>
-
-      <div className="detail-block">
-        <span>Estimated price</span>
-        <p>{formatCurrency(lead.estimated_price)}</p>
-      </div>
-
-      <div className="detail-block">
-        <span>Follow-up control</span>
-        {permissions.canEditLead ? (
-          <form className="inline-form compact-form" onSubmit={handleFollowUpSubmit}>
-            <div className="follow-up-row">
-              <input type="datetime-local" value={followUpInput} onChange={(event) => setFollowUpInput(event.target.value)} />
-              <button type="submit" className="primary-button" disabled={savingFollowUp}>
-                {savingFollowUp ? "Saving..." : "Save follow-up"}
-              </button>
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={savingFollowUp || (!lead.follow_up_at && !followUpInput)}
-                onClick={handleClearFollowUp}
-              >
-                Clear
-              </button>
-            </div>
-          </form>
-        ) : (
-          <p className="access-note">Only owners and managers can change follow-up timing.</p>
-        )}
-      </div>
-
-      {permissions.canEditLead ? (
-        <div className="status-actions">
-          {statusOptions.map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={status === lead.status ? "chip active" : "chip"}
-              disabled={statusSavingId === lead.id}
-              onClick={() => updateLeadStatus(lead.id, status)}
-            >
-              {statusSavingId === lead.id && status === lead.status ? "Saving..." : statusLabels[status] || status}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="timeline-panel">
-        <div className="section-heading compact">
+    <section className="surface-card detail-card">
+      <div className="client-hero">
+        <div className="client-hero-main">
+          <Avatar name={lead.clients?.name} large />
           <div>
-            <span className="page-kicker">History</span>
-            <h3>Timeline & notes</h3>
+            <span className="eyebrow">Карточка заявки</span>
+            <h2>{lead.clients?.name || "Клиент без имени"}</h2>
+            <p>
+              {lead.clients?.phone || "Без телефона"}{lead.clients?.email ? ` • ${lead.clients.email}` : ""}
+            </p>
           </div>
         </div>
 
-        {permissions.canEditLead ? (
-          <form className="inline-form compact-form" onSubmit={handleAddNote}>
-            <label>
-              Add internal note
-              <textarea value={note} onChange={(event) => setNote(event.target.value)} rows="3" placeholder="Called client, waiting for answer..." />
-            </label>
-            <button type="submit" className="primary-button" disabled={savingNote}>
-              {savingNote ? "Saving..." : "Add note"}
+        <div className="client-hero-actions">
+          <a className="button button-outline" href={lead.clients?.phone ? `tel:${lead.clients.phone}` : "#"}>
+            Позвонить
+          </a>
+          <a className="button button-outline" href={lead.clients?.email ? `mailto:${lead.clients.email}` : "#"}>
+            Написать
+          </a>
+          <StatusBadge status={lead.status} />
+        </div>
+      </div>
+
+      <div className="detail-grid">
+        <div className="detail-card-item">
+          <span>Услуга</span>
+          <strong>{lead.services?.name || "Не выбрана"}</strong>
+        </div>
+        <div className="detail-card-item">
+          <span>Сумма</span>
+          <strong>{formatCurrency(lead.estimated_price)}</strong>
+        </div>
+        <div className="detail-card-item">
+          <span>Автомобиль</span>
+          <strong>{[lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Не указан"}</strong>
+        </div>
+        <div className="detail-card-item">
+          <span>Источник</span>
+          <strong>{formatLabel(lead.source)}</strong>
+        </div>
+        <div className="detail-card-item">
+          <span>Предпочтительный слот</span>
+          <strong>{formatPreferredSlot(lead.preferred_date, lead.preferred_time)}</strong>
+        </div>
+        <div className="detail-card-item">
+          <span>Follow-up</span>
+          <strong>{lead.follow_up_at ? formatDate(lead.follow_up_at) : "Не назначен"}</strong>
+        </div>
+      </div>
+
+      <div className="detail-stack">
+        <div className="detail-card-item block">
+          <span>Адрес</span>
+          <p>{lead.address || "Адрес пока не указан."}</p>
+        </div>
+
+        <div className="detail-card-item block">
+          <span>Комментарий клиента</span>
+          <p>{lead.comment || "Комментарий не добавлен."}</p>
+        </div>
+      </div>
+
+      <div className="detail-tabs">
+        <button type="button" className="tab-button active">
+          История
+        </button>
+        <button type="button" className="tab-button">
+          Заметки
+        </button>
+      </div>
+
+      {permissions.canEditLead ? (
+        <div className="followup-toolbar">
+          <form className="followup-form" onSubmit={handleFollowUpSubmit}>
+            <input type="datetime-local" value={followUpInput} onChange={(event) => setFollowUpInput(event.target.value)} />
+            <button type="submit" className="button button-primary" disabled={savingFollowUp}>
+              {savingFollowUp ? "Сохраняем..." : "Сохранить follow-up"}
+            </button>
+            <button
+              type="button"
+              className="button button-outline"
+              disabled={savingFollowUp || (!lead.follow_up_at && !followUpInput)}
+              onClick={handleClearFollowUp}
+            >
+              Очистить
             </button>
           </form>
-        ) : (
-          <p className="access-note">Detailers can view timeline history, while notes stay manager-owned in this MVP.</p>
-        )}
 
-        <div className="timeline-list">
+          <div className="status-chip-row">
+            {statusOptions.map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={status === lead.status ? "status-chip active" : "status-chip"}
+                disabled={statusSavingId === lead.id}
+                onClick={() => updateLeadStatus(lead.id, status)}
+              >
+                {statusSavingId === lead.id && status === lead.status ? "Сохраняем..." : statusLabels[status] || status}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <p className="hint-text">У мастера только просмотр. Статус, follow-up и заметки изменяются менеджером или директором.</p>
+      )}
+
+      {permissions.canEditLead ? (
+        <form className="note-composer" onSubmit={handleAddNote}>
+          <label>
+            Внутренняя заметка
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} rows="3" placeholder="Позвонили клиенту, ждём подтверждение..." />
+          </label>
+          <button type="submit" className="button button-primary" disabled={savingNote}>
+            {savingNote ? "Сохраняем..." : "Добавить заметку"}
+          </button>
+        </form>
+      ) : null}
+
+      <div className="timeline-shell">
+        <div className="timeline-column">
           {leadEvents.length ? (
-            leadEvents.map((eventItem) => (
-              <article key={eventItem.id} className="timeline-item">
-                <div className="timeline-head">
-                  <strong>{eventLabels[eventItem.type] || eventItem.type}</strong>
-                  <span>{formatDate(eventItem.created_at)}</span>
-                </div>
-                <p>{eventItem.note || "No note provided."}</p>
-                <span className="timeline-author">{eventItem.created_by ? currentUserName || "Team member" : "System"}</span>
+            leadEvents.map((item) => <TimelineEvent key={item.id} item={item} currentUserName={currentUserName} />)
+          ) : (
+            <div className="timeline-empty">История появится здесь после первых изменений по заявке.</div>
+          )}
+        </div>
+
+        <aside className="notes-sidebar">
+          <div className="notes-sidebar-head">
+            <strong>Заметки</strong>
+            <span>{noteEvents.length}</span>
+          </div>
+          {noteEvents.length ? (
+            noteEvents.map((item) => (
+              <article key={item.id} className="note-card">
+                <p>{item.note}</p>
+                <small>{formatDate(item.created_at)}</small>
               </article>
             ))
           ) : (
-            <div className="timeline-empty">No timeline entries yet. Status changes and notes will appear here.</div>
+            <div className="notes-empty">Пока нет внутренних заметок.</div>
           )}
-        </div>
+        </aside>
       </div>
-    </div>
+    </section>
   );
 }
 
-function ClientsPage({ clients }) {
+function ClientsPage({ clients, leads, leadEvents }) {
+  const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
+  const [activeTab, setActiveTab] = useState("history");
+
+  useEffect(() => {
+    if (!selectedClientId && clients[0]?.id) {
+      setSelectedClientId(clients[0].id);
+    }
+  }, [clients, selectedClientId]);
+
+  const selectedClient = clients.find((client) => client.id === selectedClientId) || clients[0] || null;
+  const clientLeads = useMemo(
+    () => leads.filter((lead) => lead.client_id === selectedClient?.id),
+    [leads, selectedClient?.id]
+  );
+  const clientLeadIds = useMemo(() => new Set(clientLeads.map((lead) => lead.id)), [clientLeads]);
+  const clientEvents = useMemo(
+    () => leadEvents.filter((eventItem) => clientLeadIds.has(eventItem.lead_id)),
+    [leadEvents, clientLeadIds]
+  );
+  const clientNotes = clientEvents.filter((item) => item.type === "note_added");
+
   return (
-    <section className="feature-panel">
-      <div className="section-heading">
+    <section className="page-stack">
+      <div className="page-header">
         <div>
-          <span className="page-kicker">Customer base</span>
-          <h3>Client list</h3>
+          <h1>Клиенты</h1>
+          <p>База клиентов с историей взаимодействий, заявками и заметками команды.</p>
         </div>
       </div>
 
-      <div className="card-grid">
-        {clients.map((client) => (
-          <article key={client.id} className="profile-card">
-            <strong>{client.name}</strong>
-            <span>{client.phone}</span>
-            <p>{[client.car_make, client.car_model, client.car_year].filter(Boolean).join(" ") || "No car details yet"}</p>
-          </article>
-        ))}
+      <div className="clients-layout">
+        <section className="surface-card client-list-card">
+          <div className="section-title compact">
+            <h2>Список клиентов</h2>
+          </div>
+          <div className="client-list">
+            {clients.map((client) => (
+              <button
+                type="button"
+                key={client.id}
+                className={client.id === selectedClient?.id ? "client-list-item active" : "client-list-item"}
+                onClick={() => setSelectedClientId(client.id)}
+              >
+                <Avatar name={client.name} />
+                <div>
+                  <strong>{client.name}</strong>
+                  <span>{client.phone}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section className="surface-card client-detail-card">
+          {selectedClient ? (
+            <>
+              <div className="client-hero">
+                <div className="client-hero-main">
+                  <Avatar name={selectedClient.name} large />
+                  <div>
+                    <span className="eyebrow">Карточка клиента</span>
+                    <h2>{selectedClient.name}</h2>
+                    <p>
+                      {selectedClient.phone || "Телефон не указан"}
+                      {selectedClient.email ? ` • ${selectedClient.email}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <div className="client-hero-actions">
+                  <a className="button button-outline" href={selectedClient.phone ? `tel:${selectedClient.phone}` : "#"}>
+                    Позвонить
+                  </a>
+                  <a className="button button-outline" href={selectedClient.email ? `mailto:${selectedClient.email}` : "#"}>
+                    Написать
+                  </a>
+                  <NavLink to="/leads" className="button button-primary">
+                    Новая заявка
+                  </NavLink>
+                </div>
+              </div>
+
+              <div className="detail-tabs">
+                {clientTabs.map((tab) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    className={activeTab === tab ? "tab-button active" : "tab-button"}
+                    onClick={() => setActiveTab(tab)}
+                  >
+                    {tab === "history" ? "История" : tab === "leads" ? "Заявки" : "Заметки"}
+                  </button>
+                ))}
+              </div>
+
+              {activeTab === "history" ? (
+                <div className="timeline-column">
+                  {clientEvents.length ? (
+                    clientEvents.map((item) => <TimelineEvent key={item.id} item={item} currentUserName="Команда CRM" />)
+                  ) : (
+                    <div className="timeline-empty">У этого клиента ещё нет истории взаимодействий.</div>
+                  )}
+                </div>
+              ) : null}
+
+              {activeTab === "leads" ? (
+                <div className="data-table compact-table">
+                  <div className="table-head">
+                    <span>Заявка</span>
+                    <span>Услуга</span>
+                    <span>Статус</span>
+                    <span>Дата</span>
+                    <span>Сумма</span>
+                    <span>Действие</span>
+                  </div>
+                  {clientLeads.length ? (
+                    clientLeads.map((lead) => (
+                      <div key={lead.id} className="table-body-row">
+                        <span className="cell-strong">{selectedClient.name}</span>
+                        <span>{lead.services?.name || "Не выбрана"}</span>
+                        <span>
+                          <StatusBadge status={lead.status} />
+                        </span>
+                        <span>{formatShortDate(lead.created_at)}</span>
+                        <span className="amount-cell">{formatCurrency(lead.estimated_price)}</span>
+                        <span>
+                          <NavLink to="/leads" className="table-link">
+                            Открыть
+                          </NavLink>
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="table-empty-state">У клиента пока нет заявок.</div>
+                  )}
+                </div>
+              ) : null}
+
+              {activeTab === "notes" ? (
+                <div className="notes-grid">
+                  {clientNotes.length ? (
+                    clientNotes.map((item) => (
+                      <article key={item.id} className="note-card">
+                        <p>{item.note}</p>
+                        <small>{formatDate(item.created_at)}</small>
+                      </article>
+                    ))
+                  ) : (
+                    <div className="notes-empty">Внутренних заметок по клиенту пока нет.</div>
+                  )}
+                </div>
+              ) : null}
+            </>
+          ) : (
+            <div className="table-empty-state">Клиенты пока не загружены.</div>
+          )}
+        </section>
       </div>
+    </section>
+  );
+}
+
+function TasksPage({ leads }) {
+  const tasks = useMemo(
+    () =>
+      leads
+        .filter((lead) => lead.follow_up_at || getLeadStageKey(lead.status) === "in_progress")
+        .sort((left, right) => new Date(left.follow_up_at || left.created_at) - new Date(right.follow_up_at || right.created_at)),
+    [leads]
+  );
+
+  return (
+    <section className="page-stack">
+      <div className="page-header">
+        <div>
+          <h1>Задачи</h1>
+          <p>Открытые follow-up и рабочие заявки, которые требуют действия команды.</p>
+        </div>
+      </div>
+
+      <section className="surface-card">
+        <div className="task-list">
+          {tasks.length ? (
+            tasks.map((lead) => (
+              <article key={lead.id} className="task-item">
+                <div className="task-item-main">
+                  <MiniIcon label="TK" />
+                  <div>
+                    <strong>{lead.clients?.name || "Клиент без имени"}</strong>
+                    <span>{lead.services?.name || "Без услуги"}</span>
+                  </div>
+                </div>
+                <div className="task-item-side">
+                  <StatusBadge status={lead.status} />
+                  <small>{lead.follow_up_at ? formatDate(lead.follow_up_at) : formatDate(lead.created_at)}</small>
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="table-empty-state">Сейчас нет открытых задач для команды.</div>
+          )}
+        </div>
+      </section>
     </section>
   );
 }
 
 function ServicesPage({ services }) {
   return (
-    <section className="feature-panel">
-      <div className="section-heading">
+    <section className="page-stack">
+      <div className="page-header">
         <div>
-          <span className="page-kicker">Offer stack</span>
-          <h3>Service catalog</h3>
+          <h1>Услуги</h1>
+          <p>Каталог услуг с базовой стоимостью и длительностью для менеджера.</p>
         </div>
       </div>
 
-      <div className="card-grid">
+      <div className="service-grid">
         {services.map((service) => (
-          <article key={service.id} className="profile-card">
+          <article key={service.id} className="surface-card service-card">
+            <MiniIcon label="SR" />
             <strong>{service.name}</strong>
             <span>{formatCurrency(service.base_price)}</span>
-            <p>{service.duration_minutes} minutes</p>
+            <p>{service.duration_minutes} мин.</p>
           </article>
         ))}
       </div>
@@ -1072,36 +1499,99 @@ function ServicesPage({ services }) {
 }
 
 function SettingsPage({ webhookEnabled, role }) {
+  const [activeSection, setActiveSection] = useState("profile");
+
+  function renderSection() {
+    if (activeSection === "profile") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>Текущая роль</strong>
+            <p>{roleLabels[role] || roleLabels.manager}</p>
+          </article>
+          <article className="settings-form-card">
+            <strong>Рабочая зона</strong>
+            <p>CRM подключена к Supabase и использует браузерную аутентификацию для текущего профиля.</p>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "team") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>Команда</strong>
+            <p>Роли уже разведены на директора, менеджера и мастера. Следующий слой — отдельные реальные аккаунты на демо и продажу.</p>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "billing") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>Тариф</strong>
+            <p>Сейчас это MVP-слой. Подписочная SaaS-модель закреплена в roadmap и будет вынесена после стабилизации onboarding и UX.</p>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "integrations") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>Автоматизация</strong>
+            <p>
+              {webhookEnabled
+                ? "Внешний webhook автоматизации включён. CRM может отправлять события в дополнительный automation-layer."
+                : "Внешний webhook не обязателен. Основные уведомления и напоминания уже переведены на Supabase Edge Functions."}
+            </p>
+          </article>
+          <article className="settings-form-card">
+            <strong>Telegram</strong>
+            <p>Оповещения по новым заявкам, follow-up и daily digest уже работают через нативные Edge Functions проекта.</p>
+          </article>
+        </div>
+      );
+    }
+
+    return (
+      <div className="settings-panel-stack">
+        <article className="settings-form-card">
+          <strong>Безопасность</strong>
+          <p>RLS, rate limiting для public request и server-side Zod validation уже внедрены и проверены live.</p>
+        </article>
+      </div>
+    );
+  }
+
   return (
-    <section className="feature-panel">
-      <div className="section-heading">
+    <section className="page-stack">
+      <div className="page-header">
         <div>
-          <span className="page-kicker">Integrations</span>
-          <h3>Supabase and n8n setup</h3>
+          <h1>Настройки</h1>
+          <p>Блок конфигурации CRM, команды, интеграций и операционной безопасности.</p>
         </div>
       </div>
 
-      <div className="settings-list">
-        <article>
-          <strong>Current role</strong>
-          <p>{roleLabels[role] || roleLabels.manager}</p>
-        </article>
-        <article>
-          <strong>Supabase</strong>
-          <p>Connected with publishable key and browser auth.</p>
-        </article>
-        <article>
-          <strong>n8n webhook</strong>
-          <p>
-            {webhookEnabled
-              ? "Webhook URL is configured through VITE_N8N_WEBHOOK_URL. New leads and follow-up updates can now be posted to n8n."
-              : "Add VITE_N8N_WEBHOOK_URL to .env to send new leads and follow-up updates into n8n."}
-          </p>
-        </article>
-        <article>
-          <strong>Telegram alerts</strong>
-          <p>Manager chat IDs can be stored in the profiles table and used by n8n notifications.</p>
-        </article>
+      <div className="settings-layout">
+        <aside className="surface-card settings-nav-card">
+          {settingsSections.map((section) => (
+            <button
+              key={section}
+              type="button"
+              className={activeSection === section ? "settings-nav-item active" : "settings-nav-item"}
+              onClick={() => setActiveSection(section)}
+            >
+              {settingsSectionLabels[section]}
+            </button>
+          ))}
+        </aside>
+
+        <section className="surface-card settings-content-card">{renderSection()}</section>
       </div>
     </section>
   );
@@ -1114,13 +1604,12 @@ function ProtectedApp({ session, onSignOut }) {
   const [services, setServices] = useState([]);
   const [leadEvents, setLeadEvents] = useState([]);
   const [profile, setProfile] = useState(null);
-  const [statusFilter, setStatusFilter] = useState("all");
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [creatingLead, setCreatingLead] = useState(false);
   const [statusSavingId, setStatusSavingId] = useState(null);
   const [saveMessage, setSaveMessage] = useState("");
   const [error, setError] = useState("");
-  const webhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL;
+  const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
   const role = profile?.role || "manager";
   const permissions = getRolePermissions(role);
 
@@ -1186,7 +1675,7 @@ function ProtectedApp({ session, onSignOut }) {
       setProfile(profileData || null);
       setSelectedLeadId((current) => preferredLeadId || current || leadsData?.[0]?.id || null);
     } catch (loadError) {
-      setError(loadError.message || "Failed to load data.");
+      setError(loadError.message || "Не удалось загрузить данные.");
     } finally {
       setLoading(false);
     }
@@ -1226,7 +1715,7 @@ function ProtectedApp({ session, onSignOut }) {
       await createTimelineEvent({
         lead_id: createdLead.id,
         type: "created",
-        note: `Lead created from ${form.source}`,
+        note: `Заявка создана из источника ${formatLabel(form.source)}`,
         payload: {
           source: form.source,
           service_id: createdLead.service_id,
@@ -1248,19 +1737,19 @@ function ProtectedApp({ session, onSignOut }) {
       }
 
       try {
-        await sendN8nWebhook(webhookUrl, {
+        await sendAutomationWebhook(automationWebhookUrl, {
           event: "lead_created",
           lead: createdLead,
           client: clientRecord
         });
       } catch (webhookError) {
-        setError(webhookError.message || "Lead was created, but n8n webhook failed.");
+        setError(webhookError.message || "Заявка создана, но внешний automation webhook не отработал.");
       }
 
-      setSaveMessage(reused ? "Lead created and existing client was updated." : "Lead created successfully.");
+      setSaveMessage(reused ? "Заявка создана, существующий клиент обновлён." : "Заявка успешно создана.");
       return true;
     } catch (createError) {
-      setError(createError.message || "Failed to create lead.");
+      setError(createError.message || "Не удалось создать заявку.");
       return false;
     } finally {
       setCreatingLead(false);
@@ -1285,21 +1774,21 @@ function ProtectedApp({ session, onSignOut }) {
 
       if (updateError) {
         setLeads(previousLeads);
-        setError(updateError.message || "Failed to update lead.");
+        setError(updateError.message || "Не удалось обновить заявку.");
         return;
       }
 
       await createTimelineEvent({
         lead_id: leadId,
         type: "status_changed",
-        note: `Status changed from ${previousLead.status} to ${nextStatus}`,
+        note: `Статус изменён с "${statusLabels[previousLead.status] || previousLead.status}" на "${statusLabels[nextStatus] || nextStatus}"`,
         payload: {
           from: previousLead.status,
           to: nextStatus
         },
         created_by: session.user.id
       });
-      setSaveMessage(`Lead status updated to ${statusLabels[nextStatus] || nextStatus}.`);
+      setSaveMessage(`Статус обновлён: ${statusLabels[nextStatus] || nextStatus}.`);
     } finally {
       setStatusSavingId(null);
     }
@@ -1330,14 +1819,14 @@ function ProtectedApp({ session, onSignOut }) {
 
     if (updateError) {
       setLeads(previousLeads);
-      setError(updateError.message || "Failed to update follow-up.");
+      setError(updateError.message || "Не удалось обновить follow-up.");
       return false;
     }
 
     await createTimelineEvent({
       lead_id: lead.id,
       type: "follow_up_set",
-      note: nextFollowUpAt ? `Follow-up set for ${formatDate(nextFollowUpAt)}` : "Follow-up cleared",
+      note: nextFollowUpAt ? `Follow-up назначен на ${formatDate(nextFollowUpAt)}` : "Follow-up очищен",
       payload: {
         follow_up_at: nextFollowUpAt
       },
@@ -1345,7 +1834,7 @@ function ProtectedApp({ session, onSignOut }) {
     });
 
     try {
-      await sendN8nWebhook(webhookUrl, {
+      await sendAutomationWebhook(automationWebhookUrl, {
         event: "follow_up_updated",
         lead: {
           ...lead,
@@ -1353,10 +1842,10 @@ function ProtectedApp({ session, onSignOut }) {
         }
       });
     } catch (webhookError) {
-      setError(webhookError.message || "Follow-up updated, but n8n webhook failed.");
+      setError(webhookError.message || "Follow-up обновлён, но внешний automation webhook не отработал.");
     }
 
-    setSaveMessage(nextFollowUpAt ? "Follow-up saved." : "Follow-up cleared.");
+    setSaveMessage(nextFollowUpAt ? "Follow-up сохранён." : "Follow-up очищен.");
     return true;
   }
 
@@ -1367,7 +1856,7 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: noteError } = await addLeadNoteRecord(supabase, leadId, note, session.user.id);
 
     if (noteError) {
-      setError(noteError.message || "Failed to add note.");
+      setError(noteError.message || "Не удалось добавить заметку.");
       return false;
     }
 
@@ -1375,7 +1864,7 @@ function ProtectedApp({ session, onSignOut }) {
       setLeadEvents((current) => [data, ...current]);
     }
 
-    setSaveMessage("Internal note added.");
+    setSaveMessage("Заметка добавлена.");
     return true;
   }
 
@@ -1410,34 +1899,40 @@ function ProtectedApp({ session, onSignOut }) {
   );
 
   const metrics = useMemo(() => {
+    const now = new Date();
+    const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const clientsCount = clients.length;
+    const todayLeads = visibleLeads.filter((lead) => new Date(lead.created_at).toDateString() === now.toDateString()).length;
     const newCount = visibleLeads.filter((lead) => lead.status === "new").length;
-    const activeCount = visibleLeads.filter((lead) => ["contacted", "quoted", "scheduled", "in_progress"].includes(lead.status)).length;
-    const followUpCount = visibleLeads.filter((lead) => lead.follow_up_at && new Date(lead.follow_up_at) <= new Date()).length;
-    const doneRevenue = visibleLeads
-      .filter((lead) => lead.status === "done")
+    const followUpCount = visibleLeads.filter((lead) => lead.follow_up_at && new Date(lead.follow_up_at) <= now).length;
+    const openTasks = visibleLeads.filter((lead) => getLeadStageKey(lead.status) === "in_progress" || lead.follow_up_at).length;
+    const monthRevenue = visibleLeads
+      .filter((lead) => lead.status === "done" && String(lead.created_at || "").slice(0, 7) === monthKey)
       .reduce((total, lead) => total + Number(lead.estimated_price || 0), 0);
 
-    return { newCount, activeCount, followUpCount, doneRevenue };
-  }, [visibleLeads]);
+    return { clientsCount, todayLeads, newCount, followUpCount, openTasks, monthRevenue };
+  }, [clients.length, visibleLeads]);
 
   const defaultRoute = permissions.nav[0] || "/dashboard";
   const leadsEmptyMessage =
     role === "detailer"
-      ? "No assigned jobs yet. Assigned detailing work will appear here."
-      : "No leads yet. Create the first inbound detailing request above.";
+      ? "Назначенных заявок пока нет. Как только менеджер назначит работу, она появится здесь."
+      : "Пока нет заявок. Создайте первую, и pipeline заполнится автоматически.";
 
   if (loading) {
-    return <div className="loading-screen">Loading CRM workspace...</div>;
+    return <div className="loading-screen">Загружаем CRM...</div>;
   }
 
   return (
     <AppLayout session={session} metrics={metrics} role={role} onSignOut={onSignOut}>
-      {error ? <div className="banner error">{error}</div> : null}
-      {saveMessage ? <div className="banner success">{saveMessage}</div> : null}
+      {error ? <div className="notice notice-error">{error}</div> : null}
+      {saveMessage ? <div className="notice notice-success">{saveMessage}</div> : null}
 
       <Routes>
         <Route path="/" element={<Navigate to={defaultRoute} replace />} />
-        {permissions.nav.includes("/dashboard") ? <Route path="/dashboard" element={<DashboardPage metrics={metrics} leads={visibleLeads} role={role} />} /> : null}
+        {permissions.nav.includes("/dashboard") ? (
+          <Route path="/dashboard" element={<DashboardPage metrics={metrics} leads={visibleLeads} onOpenLead={setSelectedLeadId} />} />
+        ) : null}
         {permissions.nav.includes("/leads") ? (
           <Route
             path="/leads"
@@ -1449,8 +1944,6 @@ function ProtectedApp({ session, onSignOut }) {
                 currentUserName={profile?.full_name || session.user.email}
                 permissions={permissions}
                 emptyMessage={leadsEmptyMessage}
-                statusFilter={statusFilter}
-                setStatusFilter={setStatusFilter}
                 selectedLeadId={selectedLeadId}
                 setSelectedLeadId={setSelectedLeadId}
                 createLead={createLead}
@@ -1463,11 +1956,17 @@ function ProtectedApp({ session, onSignOut }) {
             }
           />
         ) : null}
-        {permissions.nav.includes("/clients") ? <Route path="/clients" element={<ClientsPage clients={clients} />} /> : null}
-        {permissions.nav.includes("/services") ? <Route path="/services" element={<ServicesPage services={services} />} /> : null}
-        {permissions.nav.includes("/settings") ? (
-          <Route path="/settings" element={<SettingsPage webhookEnabled={Boolean(import.meta.env.VITE_N8N_WEBHOOK_URL)} role={role} />} />
+        {permissions.nav.includes("/clients") ? (
+          <Route path="/clients" element={<ClientsPage clients={clients} leads={visibleLeads} leadEvents={visibleLeadEvents} />} />
         ) : null}
+        {permissions.nav.includes("/tasks") ? <Route path="/tasks" element={<TasksPage leads={visibleLeads} />} /> : null}
+        {permissions.nav.includes("/settings") ? (
+          <Route
+            path="/settings"
+            element={<SettingsPage webhookEnabled={Boolean(import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL)} role={role} />}
+          />
+        ) : null}
+        {permissions.nav.includes("/services") ? <Route path="/services" element={<ServicesPage services={services} />} /> : null}
         <Route path="*" element={<Navigate to={defaultRoute} replace />} />
       </Routes>
     </AppLayout>
@@ -1508,7 +2007,7 @@ export default function App() {
   }
 
   if (booting && !isPublicRequestRoute) {
-    return <div className="loading-screen">Preparing workspace...</div>;
+    return <div className="loading-screen">Подготавливаем рабочее пространство...</div>;
   }
 
   if (isPublicRequestRoute) {

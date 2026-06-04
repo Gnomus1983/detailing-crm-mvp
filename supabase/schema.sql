@@ -99,6 +99,13 @@ create table if not exists public.automation_runs (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.rate_limit_events (
+  id uuid primary key default gen_random_uuid(),
+  action_key text not null,
+  identifier_hash text not null,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 create index if not exists clients_phone_idx on public.clients(phone);
 create unique index if not exists clients_phone_unique_idx on public.clients(phone);
 create index if not exists leads_status_idx on public.leads(status);
@@ -109,6 +116,9 @@ create index if not exists lead_events_lead_id_idx on public.lead_events(lead_id
 create index if not exists automation_runs_key_idx on public.automation_runs(automation_key);
 create index if not exists automation_runs_scope_idx on public.automation_runs(scope_key);
 create index if not exists automation_runs_lead_id_idx on public.automation_runs(lead_id);
+create index if not exists rate_limit_events_action_idx on public.rate_limit_events(action_key);
+create index if not exists rate_limit_events_identifier_idx on public.rate_limit_events(identifier_hash);
+create index if not exists rate_limit_events_created_at_idx on public.rate_limit_events(created_at);
 
 create or replace trigger profiles_set_updated_at
 before update on public.profiles
@@ -133,13 +143,16 @@ alter table public.leads enable row level security;
 alter table public.lead_events enable row level security;
 alter table public.attachments enable row level security;
 alter table public.automation_runs enable row level security;
+alter table public.rate_limit_events enable row level security;
 
+drop policy if exists "Authenticated users can read profiles" on public.profiles;
 create policy "Authenticated users can read profiles"
 on public.profiles
 for select
 to authenticated
 using (true);
 
+drop policy if exists "Users can update own profile" on public.profiles;
 create policy "Users can update own profile"
 on public.profiles
 for update
@@ -147,52 +160,380 @@ to authenticated
 using (auth.uid() = id)
 with check (auth.uid() = id);
 
-create policy "Authenticated users can manage clients"
+drop policy if exists "Authenticated users can manage clients" on public.clients;
+drop policy if exists "Owners and managers can read all clients" on public.clients;
+drop policy if exists "Detailers can read assigned clients" on public.clients;
+drop policy if exists "Owners and managers can create clients" on public.clients;
+drop policy if exists "Owners and managers can update clients" on public.clients;
+drop policy if exists "Owners and managers can delete clients" on public.clients;
+create policy "Owners and managers can read all clients"
 on public.clients
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
-create policy "Authenticated users can manage services"
+create policy "Detailers can read assigned clients"
+on public.clients
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.leads
+    where leads.client_id = clients.id
+      and leads.assigned_to = auth.uid()
+  )
+);
+
+create policy "Owners and managers can create clients"
+on public.clients
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can update clients"
+on public.clients
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can delete clients"
+on public.clients
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+drop policy if exists "Authenticated users can manage services" on public.services;
+drop policy if exists "Authenticated users can read services" on public.services;
+drop policy if exists "Owners and managers can manage services" on public.services;
+create policy "Authenticated users can read services"
+on public.services
+for select
+to authenticated
+using (true);
+
+create policy "Owners and managers can manage services"
 on public.services
 for all
 to authenticated
-using (true)
-with check (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
+drop policy if exists "Public users can read active services" on public.services;
 create policy "Public users can read active services"
 on public.services
 for select
 to anon
 using (is_active = true);
 
-create policy "Authenticated users can manage leads"
+drop policy if exists "Authenticated users can manage leads" on public.leads;
+drop policy if exists "Owners and managers can read all leads" on public.leads;
+drop policy if exists "Detailers can read assigned leads" on public.leads;
+drop policy if exists "Owners and managers can create leads" on public.leads;
+drop policy if exists "Owners and managers can update leads" on public.leads;
+drop policy if exists "Owners and managers can delete leads" on public.leads;
+create policy "Owners and managers can read all leads"
 on public.leads
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
-create policy "Authenticated users can manage lead events"
+create policy "Detailers can read assigned leads"
+on public.leads
+for select
+to authenticated
+using (assigned_to = auth.uid());
+
+create policy "Owners and managers can create leads"
+on public.leads
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can update leads"
+on public.leads
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can delete leads"
+on public.leads
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+drop policy if exists "Authenticated users can manage lead events" on public.lead_events;
+drop policy if exists "Owners and managers can read all lead events" on public.lead_events;
+drop policy if exists "Detailers can read assigned lead events" on public.lead_events;
+drop policy if exists "Owners and managers can create lead events" on public.lead_events;
+drop policy if exists "Owners and managers can update lead events" on public.lead_events;
+drop policy if exists "Owners and managers can delete lead events" on public.lead_events;
+create policy "Owners and managers can read all lead events"
 on public.lead_events
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
-create policy "Authenticated users can manage attachments"
+create policy "Detailers can read assigned lead events"
+on public.lead_events
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.leads
+    where leads.id = lead_events.lead_id
+      and leads.assigned_to = auth.uid()
+  )
+);
+
+create policy "Owners and managers can create lead events"
+on public.lead_events
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can update lead events"
+on public.lead_events
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can delete lead events"
+on public.lead_events
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+drop policy if exists "Authenticated users can manage attachments" on public.attachments;
+drop policy if exists "Owners and managers can read all attachments" on public.attachments;
+drop policy if exists "Detailers can read assigned attachments" on public.attachments;
+drop policy if exists "Owners and managers can create attachments" on public.attachments;
+drop policy if exists "Owners and managers can update attachments" on public.attachments;
+drop policy if exists "Owners and managers can delete attachments" on public.attachments;
+create policy "Owners and managers can read all attachments"
 on public.attachments
-for all
+for select
 to authenticated
-using (true)
-with check (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
-create policy "Authenticated users can read automation runs"
+create policy "Detailers can read assigned attachments"
+on public.attachments
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.leads
+    where leads.id = attachments.lead_id
+      and leads.assigned_to = auth.uid()
+  )
+);
+
+create policy "Owners and managers can create attachments"
+on public.attachments
+for insert
+to authenticated
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can update attachments"
+on public.attachments
+for update
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+)
+with check (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+create policy "Owners and managers can delete attachments"
+on public.attachments
+for delete
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+drop policy if exists "Authenticated users can read automation runs" on public.automation_runs;
+drop policy if exists "Owners and managers can read automation runs" on public.automation_runs;
+create policy "Owners and managers can read automation runs"
 on public.automation_runs
 for select
 to authenticated
-using (true);
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
+
+drop policy if exists "Owners and managers can read rate limit events" on public.rate_limit_events;
+create policy "Owners and managers can read rate limit events"
+on public.rate_limit_events
+for select
+to authenticated
+using (
+  exists (
+    select 1
+    from public.profiles
+    where profiles.id = auth.uid()
+      and profiles.role in ('owner', 'manager')
+  )
+);
 
 create or replace function public.submit_public_lead(
   p_client_name text,
@@ -209,7 +550,8 @@ create or replace function public.submit_public_lead(
   p_preferred_date date default null,
   p_preferred_time text default null,
   p_estimated_price numeric default null,
-  p_follow_up_at timestamptz default null
+  p_follow_up_at timestamptz default null,
+  p_website text default null
 )
 returns jsonb
 language plpgsql
@@ -222,50 +564,60 @@ declare
   v_lead public.leads%rowtype;
   v_reused boolean := false;
 begin
+  if nullif(trim(coalesce(p_website, '')), '') is not null then
+    raise exception 'Spam check failed.';
+  end if;
+
+  if exists (
+    select 1
+    from public.leads
+    join public.clients on clients.id = leads.client_id
+    where clients.phone = trim(p_phone)
+      and leads.source = coalesce(p_source, 'landing')
+      and leads.created_at >= timezone('utc', now()) - interval '10 minutes'
+  ) then
+    raise exception 'A request for this phone was already submitted recently. Please wait a few minutes.';
+  end if;
+
   select *
   into v_existing_client
   from public.clients
   where phone = trim(p_phone)
   limit 1;
 
-  if v_existing_client.id is not null then
-    update public.clients
-    set
-      name = trim(p_client_name),
-      email = nullif(trim(coalesce(p_email, '')), ''),
-      car_make = nullif(trim(coalesce(p_car_make, '')), ''),
-      car_model = nullif(trim(coalesce(p_car_model, '')), ''),
-      car_year = p_car_year,
-      car_plate = nullif(trim(coalesce(p_car_plate, '')), ''),
-      notes = coalesce(nullif(trim(coalesce(p_comment, '')), ''), v_existing_client.notes),
-      updated_at = timezone('utc', now())
-    where id = v_existing_client.id
-    returning * into v_client;
+  v_reused := v_existing_client.id is not null;
 
-    v_reused := true;
-  else
-    insert into public.clients (
-      name,
-      phone,
-      email,
-      car_make,
-      car_model,
-      car_year,
-      car_plate,
-      notes
-    )
-    values (
-      trim(p_client_name),
-      trim(p_phone),
-      nullif(trim(coalesce(p_email, '')), ''),
-      nullif(trim(coalesce(p_car_make, '')), ''),
-      nullif(trim(coalesce(p_car_model, '')), ''),
-      p_car_year,
-      nullif(trim(coalesce(p_car_plate, '')), ''),
-      nullif(trim(coalesce(p_comment, '')), '')
-    )
-    returning * into v_client;
-  end if;
+  insert into public.clients (
+    name,
+    phone,
+    email,
+    car_make,
+    car_model,
+    car_year,
+    car_plate,
+    notes
+  )
+  values (
+    trim(p_client_name),
+    trim(p_phone),
+    nullif(trim(coalesce(p_email, '')), ''),
+    nullif(trim(coalesce(p_car_make, '')), ''),
+    nullif(trim(coalesce(p_car_model, '')), ''),
+    p_car_year,
+    nullif(trim(coalesce(p_car_plate, '')), ''),
+    nullif(trim(coalesce(p_comment, '')), '')
+  )
+  on conflict (phone) do update
+  set
+    name = excluded.name,
+    email = excluded.email,
+    car_make = excluded.car_make,
+    car_model = excluded.car_model,
+    car_year = excluded.car_year,
+    car_plate = excluded.car_plate,
+    notes = coalesce(excluded.notes, public.clients.notes),
+    updated_at = timezone('utc', now())
+  returning * into v_client;
 
   insert into public.leads (
     client_id,
@@ -327,7 +679,7 @@ end;
 $$;
 
 grant execute on function public.submit_public_lead(
-  text, text, text, uuid, text, text, integer, text, text, text, text, date, text, numeric, timestamptz
+  text, text, text, uuid, text, text, integer, text, text, text, text, date, text, numeric, timestamptz, text
 ) to anon, authenticated;
 
 -- Creates a profile row automatically for every new auth user.

@@ -5,8 +5,8 @@ Lean MVP CRM for auto detailing businesses.
 ## Stack
 
 - Supabase Free
-- React + Vite + Tailwind
-- n8n self-hosted
+- React + Vite
+- Supabase Edge Functions + Cron
 - Vercel Free
 
 ## First setup
@@ -41,11 +41,9 @@ See [PROJECT_HANDOFF.md](C:/Users/Asus/Documents/New project 2/detailing-crm-mvp
 - `done`
 - `lost`
 
-## Next build steps
+## Current build focus
 
-1. `leads` list
-2. lead detail page
-3. status updates + event logging
-4. client list
-5. dashboard metrics
-6. n8n alerts and reminders
+1. role QA and access hardening
+2. public form anti-spam protection
+3. Supabase-native automation cleanup
+4. sales demo hardening
