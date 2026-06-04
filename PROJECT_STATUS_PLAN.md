@@ -56,8 +56,8 @@ Important source files:
 
 Current stage:
 - internal CRM MVP is already working
-- demo-ready flow is largely completed
-- role-aware visibility has been started and implemented in the frontend
+- demo-ready flow is now clean and visually polished
+- role-aware visibility is already implemented and verified
 
 ## 3. What Was Already Done
 
@@ -115,6 +115,7 @@ Current stage:
 - public intake now has a minimal anti-spam layer
 - public intake was re-verified live after hardening
 - deployed automation was re-verified live after hardening
+- full smoke suite now passes (`5 passed`)
 - Romanian localization was pushed further across:
   - CRM UI
   - Telegram automation templates
@@ -133,6 +134,9 @@ Current stage:
   - set follow-up
   - verify `lead_events`
   - verify webhook events
+- live demo data was cleaned from smoke / rate-limit pollution
+- one clean `Public Demo Client` scenario was preserved
+- topbar identity was cleaned so demo no longer shows test-only naming
 
 ### Role Layer
 - role-aware visibility started
@@ -140,6 +144,7 @@ Current stage:
   - `owner`
   - `manager`
   - `detailer`
+- live role QA was completed
 
 ## 4. Important Recovery Note
 
@@ -167,12 +172,10 @@ Current status after recovery:
 - Supabase-native automation works live
 
 ### In Progress
-- role-aware visibility was verified through the single-user live QA path
 - legacy `n8n` leftovers were reduced to compatibility-only references
-- role-aware visibility needs re-verification against the stricter live policies
 - access control can still be strengthened further for future SaaS-grade isolation
-- Romanian localization should still be checked manually screen-by-screen during role QA
-- because the live project currently has only one real profile, a single-user role QA path has been prepared
+- product is now in UI-polished, QA-closed, demo-ready state
+- next decision is commercial: checkpoint commit and first live demo / sale
 
 ### Not Started Yet
 - reactivation flow
@@ -256,36 +259,18 @@ This means:
 | 6 | Add role-aware visibility | Done | Verified through single-user live QA path |
 | 7 | Build public client entry form | Done | Implemented and verified live |
 | 8 | Add Supabase-native automation flows | Done | Edge Functions deployed and verified live |
-| 9 | Strengthen UX / visual system | Active | CRM and public surface should feel cleaner, more premium, and easier to show |
-| 10 | Build public-facing site layer | Active | Request flow, login experience, and visual presentation need to feel like a real product |
-| 11 | Create onboarding / usage layer | Active | Instructions, roles, and usage path must be documented clearly |
-| 12 | Create QA / testing discipline | Active | Pre-demo, post-change, and role-based checks must be repeatable |
+| 9 | Strengthen UX / visual system | Done | CRM and public surface were redesigned and polished |
+| 10 | Build public-facing site layer | Done | Request flow and login/public visual surface now feel like one product |
+| 11 | Create onboarding / usage layer | Done | Instructions, roles, and usage path are documented |
+| 12 | Create QA / testing discipline | Done | Manual QA plus green smoke suite are now in place |
 | 13 | Keep security / protection active | Active | RLS, anti-spam, and safe operations remain a standing stream |
-| 14 | Package as sellable product | Active | Demo story + offer + onboarding + visual confidence |
+| 14 | Package as sellable product | Active | Demo story + offer + onboarding + visual confidence are now largely ready |
 | 15 | Move toward SaaS model | Later | Multi-business structure |
 | 16 | Mobile app | Later | Only after stable web CRM + stable backend automations |
 
 ## 10. Recommended Immediate Next Steps
 
-### Step 1. Strengthen UX / visual system
-- refine login
-- refine public request form
-- refine dashboard
-- refine leads list and lead detail card
-- align visual language with a clearer premium product feel
-
-### Step 2. Strengthen public-facing product layer
-- make public request and entry flow cleaner
-- make login and first screen feel safer and more premium
-- treat the product as both CRM and public-facing workflow system
-
-### Step 3. Build onboarding / usage layer
-- create user guide
-- create roles and access guide
-- create QA checklist
-- explain how CRM is used in real work
-
-### Step 4. Keep hardening active
+### Step 1. Keep hardening active
 - keep RLS strong
 - keep anti-spam active
 - maintain live automation safety
@@ -293,7 +278,7 @@ This means:
 - use `CODEX_PACKAGE/SECURITY_AUDIT.md` as current audit baseline
 - keep `public-request` Edge Function as the active server-side throttle layer for public intake
 
-### Step 5. Finalize stronger sales demo
+### Step 2. Finalize stronger sales demo
 - one believable end-to-end scenario
 - incoming request
 - manager sees lead
@@ -301,13 +286,13 @@ This means:
 - reminder is triggered
 - client is booked
 
-### Step 6. Keep QA discipline explicit
-- repeatable smoke tests
-- role verification
-- pre-demo verification
-- post-change verification
+### Step 3. Keep QA discipline explicit
+- repeatable smoke tests now exist
+- keep role verification fresh before real demos
+- keep pre-demo verification active
+- keep post-change verification active
 
-### Step 7. Keep architecture written down
+### Step 4. Keep architecture written down
 - use `CODEX_PACKAGE/ARCHITECTURE.md` as current source of truth
 - update it when core architecture changes
 
@@ -315,14 +300,12 @@ This means:
 
 Recommended order from here:
 
-1. Strengthen UX / visual system
-2. Strengthen public-facing product layer
-3. Build onboarding / usage layer
-4. Keep QA discipline explicit
-5. Keep hardening active
-6. Finalize sales demo
-7. Start thinking about reusable SaaS structure
-8. Prepare mobile app layer only after stable web + automation core
+1. Keep hardening active
+2. Finalize sales demo
+3. Rehearse and show the first live demo
+4. Collect objections / feedback
+5. Then deepen automation or move toward reusable SaaS structure
+6. Prepare mobile app layer only after stable web + automation core
 
 ## 12. Short Plain Summary
 
@@ -339,19 +322,14 @@ What is already true:
 - Telegram automations work live
 
 What is happening now:
-- the next product step is not a new technical feature first
 - the architecture is now formally documented
-- the next product step is UX / visual strengthening
-- public-facing product clarity must be improved
-- onboarding / usage documentation must be created
-- QA discipline must be made explicit
+- QA is now formally closed
+- UI polish and demo cleanup are complete
 - hardening remains active in parallel
+- the next step is commercial readiness and first real demo conversations
 
 What comes next:
-- UX / visual system
-- public-facing product layer
-- onboarding / usage layer
-- QA / testing discipline
+- first live demo / sales use
 - sellable packaging
 - SaaS path after product validation
 

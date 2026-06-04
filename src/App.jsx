@@ -14,7 +14,7 @@ import detailLogo from "./detailLogo";
 import { supabase } from "./supabase";
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard" },
+  { to: "/dashboard", label: "Панель" },
   { to: "/leads", label: "Заявки" },
   { to: "/clients", label: "Клиенты" },
   { to: "/tasks", label: "Задачи" },
@@ -643,10 +643,10 @@ function PublicRequestPage({ isAuthenticated }) {
   );
 }
 
-function TopBar({ session, role, permissions, onSignOut }) {
+function TopBar({ session, role, permissions, onSignOut, currentUserName }) {
   const location = useLocation();
   const centerNavItems = navItems.filter((item) => item.to !== "/settings" && permissions.nav.includes(item.to));
-  const fullName = session.user.user_metadata?.full_name || session.user.email;
+  const fullName = currentUserName || session.user.user_metadata?.full_name || session.user.email;
 
   return (
     <header className="topbar">
@@ -691,18 +691,24 @@ function TopBar({ session, role, permissions, onSignOut }) {
   );
 }
 
-function AppLayout({ session, metrics, role, children, onSignOut }) {
+function AppLayout({ session, metrics, role, children, onSignOut, currentUserName }) {
   const permissions = getRolePermissions(role);
 
   return (
     <div className="crm-shell">
-      <TopBar session={session} role={role} permissions={permissions} onSignOut={onSignOut} />
+      <TopBar
+        session={session}
+        role={role}
+        permissions={permissions}
+        onSignOut={onSignOut}
+        currentUserName={currentUserName}
+      />
 
       <main className="crm-main">
         <div className="crm-summary-bar">
           <span>{metrics.newCount} новых</span>
           <span>{metrics.openTasks} открытых задач</span>
-          <span>{metrics.followUpCount} pending follow-up</span>
+          <span>{metrics.followUpCount} follow-up на сегодня</span>
         </div>
         {children}
       </main>
@@ -733,7 +739,7 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
       <section className="surface-card">
         <div className="section-title">
           <div>
-            <span className="eyebrow">Live pipeline</span>
+            <span className="eyebrow">Оперативная сводка</span>
             <h2>Последние заявки</h2>
           </div>
         </div>
@@ -928,7 +934,7 @@ function LeadsPage({
   addLeadNote
 }) {
   const [search, setSearch] = useState("");
-  const [showComposer, setShowComposer] = useState(true);
+  const [showComposer, setShowComposer] = useState(false);
 
   const filteredLeads = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -984,7 +990,7 @@ function LeadsPage({
         <div className="page-header-actions">
           {permissions.canCreateLead ? (
             <button type="button" className="button button-primary" onClick={() => setShowComposer((current) => !current)}>
-              Добавить заявку
+              {showComposer ? "Скрыть форму" : "Добавить заявку"}
             </button>
           ) : null}
           <input
@@ -997,6 +1003,13 @@ function LeadsPage({
       </div>
 
       {permissions.canCreateLead && showComposer ? <NewLeadForm services={services} onCreateLead={createLead} creatingLead={creatingLead} /> : null}
+      {permissions.canCreateLead && !showComposer ? (
+        <section className="surface-card compact-note-card composer-hint-card">
+          <span className="eyebrow">Быстрый ввод</span>
+          <h2>Новая заявка скрыта</h2>
+          <p>Откройте форму только когда нужно внести лид вручную. Так pipeline и рабочая карточка остаются в фокусе во время звонков и обработки входящих заявок.</p>
+        </section>
+      ) : null}
 
       {!permissions.canCreateLead ? (
         <section className="surface-card compact-note-card">
@@ -1006,41 +1019,43 @@ function LeadsPage({
         </section>
       ) : null}
 
-      <div className="kanban-grid">
-        {["new", "in_progress", "done", "lost"].map((columnKey) => (
-          <section key={columnKey} className={isStageHighlighted(columnKey) ? "kanban-column active" : "kanban-column"}>
-            <div className="kanban-column-head">
-              <strong>{statusGroupLabels[columnKey]}</strong>
-              <span>{groupedLeads[columnKey].length}</span>
-            </div>
-            <div className="kanban-list">
-              {groupedLeads[columnKey].length ? (
-                groupedLeads[columnKey].map((lead) => (
-                  <LeadCard
-                    key={lead.id}
-                    lead={lead}
-                    isActive={lead.id === selectedLead?.id}
-                    onClick={() => setSelectedLeadId(lead.id)}
-                  />
-                ))
-              ) : (
-                <div className="kanban-empty">{leads.length ? "Нет карточек в этой колонке." : emptyMessage}</div>
-              )}
-            </div>
-          </section>
-        ))}
-      </div>
+      <div className="leads-workspace">
+        <div className="kanban-grid">
+          {["new", "in_progress", "done", "lost"].map((columnKey) => (
+            <section key={columnKey} className={isStageHighlighted(columnKey) ? "kanban-column active" : "kanban-column"}>
+              <div className="kanban-column-head">
+                <strong>{statusGroupLabels[columnKey]}</strong>
+                <span>{groupedLeads[columnKey].length}</span>
+              </div>
+              <div className="kanban-list">
+                {groupedLeads[columnKey].length ? (
+                  groupedLeads[columnKey].map((lead) => (
+                    <LeadCard
+                      key={lead.id}
+                      lead={lead}
+                      isActive={lead.id === selectedLead?.id}
+                      onClick={() => setSelectedLeadId(lead.id)}
+                    />
+                  ))
+                ) : (
+                  <div className="kanban-empty">{leads.length ? "Нет карточек в этой колонке." : emptyMessage}</div>
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
 
-      <LeadDetailCard
-        lead={selectedLead}
-        leadEvents={selectedLeadEvents}
-        currentUserName={currentUserName}
-        permissions={permissions}
-        statusSavingId={statusSavingId}
-        updateLeadStatus={updateLeadStatus}
-        updateLeadFollowUp={updateLeadFollowUp}
-        addLeadNote={addLeadNote}
-      />
+        <LeadDetailCard
+          lead={selectedLead}
+          leadEvents={selectedLeadEvents}
+          currentUserName={currentUserName}
+          permissions={permissions}
+          statusSavingId={statusSavingId}
+          updateLeadStatus={updateLeadStatus}
+          updateLeadFollowUp={updateLeadFollowUp}
+          addLeadNote={addLeadNote}
+        />
+      </div>
     </section>
   );
 }
@@ -1924,7 +1939,13 @@ function ProtectedApp({ session, onSignOut }) {
   }
 
   return (
-    <AppLayout session={session} metrics={metrics} role={role} onSignOut={onSignOut}>
+    <AppLayout
+      session={session}
+      metrics={metrics}
+      role={role}
+      onSignOut={onSignOut}
+      currentUserName={profile?.full_name || session.user.email}
+    >
       {error ? <div className="notice notice-error">{error}</div> : null}
       {saveMessage ? <div className="notice notice-success">{saveMessage}</div> : null}
 

@@ -24,30 +24,32 @@ Bring the detailing CRM MVP from a working internal CRM to a clear, secure, visu
 - [x] prepare single-user role QA path for live project
 
 ### 2. Prepare demo users / demo data
-- [ ] create or confirm demo users for:
-  - [ ] owner
-  - [ ] manager
-  - [ ] detailer
-- [ ] assign at least one lead to detailer
-- [ ] confirm role labels display correctly in UI
+- [x] create or confirm demo users for:
+  - [x] owner
+  - [x] manager
+  - [x] detailer
+- [x] assign at least one lead to detailer
+- [x] confirm role labels display correctly in UI
 - [x] confirm Romanian localization for demo services and comments
-- [ ] confirm demo seed still looks believable
+- [x] confirm demo seed still looks believable
+- [x] clean smoke / rate-limit test data from live demo view
+- [x] keep one believable `Public Demo Client` for public intake scenario
 
 ### 3. UX / visual system
-- [ ] strengthen CRM visual hierarchy
-- [ ] improve login screen presentation
-- [ ] improve public request form presentation
-- [ ] improve dashboard visual clarity
-- [ ] improve lead list and lead detail card polish
-- [ ] align UI with a simpler, more premium product look
-- [ ] make CRM easier to scan for owner and manager
-- [ ] make technician view feel simpler and more operational
+- [x] strengthen CRM visual hierarchy
+- [x] improve login screen presentation
+- [x] improve public request form presentation
+- [x] improve dashboard visual clarity
+- [x] improve lead list and lead detail card polish
+- [x] align UI with a simpler, more premium product look
+- [x] make CRM easier to scan for owner and manager
+- [x] make technician view feel simpler and more operational
 
 ### 4. Public-facing product layer
-- [ ] make public request flow feel like a product, not only a form
-- [ ] improve first impression of login / entry experience
-- [ ] define cleaner visual direction for the customer-facing side
-- [ ] align public layer and internal CRM into one consistent product language
+- [x] make public request flow feel like a product, not only a form
+- [x] improve first impression of login / entry experience
+- [x] define cleaner visual direction for the customer-facing side
+- [x] align public layer and internal CRM into one consistent product language
 
 ### 5. Build public client entry form
 - [x] create separate public form page
@@ -71,10 +73,10 @@ Bring the detailing CRM MVP from a working internal CRM to a clear, secure, visu
 - [x] remove legacy `n8n` leftovers from UI, scripts, and docs
 - [x] strengthen access control / RLS
 - [x] add minimal anti-spam protection to public form
-- [ ] re-verify role behavior for `owner / manager / detailer`
+- [x] re-verify role behavior for `owner / manager / detailer`
 - [x] translate live automation messages to Romanian
-- [ ] review site / CRM security posture screen by screen
-- [ ] define a small protection checklist before public rollout
+- [x] review site / CRM security posture screen by screen
+- [x] define a small protection checklist before public rollout
 - [x] create `SECURITY_AUDIT.md` for auth / RLS / IDOR audit
 - [x] add server-side public request rate limiting target path
 - [x] deploy and verify `public-request` Edge Function live
@@ -82,37 +84,45 @@ Bring the detailing CRM MVP from a working internal CRM to a clear, secure, visu
 - [x] verify invalid payload rejection on live external POST endpoints we control
 
 ### 8. Onboarding / usage layer
-- [ ] create CRM user guide
-- [ ] create roles and access guide
-- [ ] create short usage instructions for owner / manager / technician
-- [ ] create repeatable QA checklist
-- [ ] create login / access instructions
-- [ ] explain automation behavior in simple Romanian
-- [ ] explain what each role is allowed to do
+- [x] create CRM user guide
+- [x] create roles and access guide
+- [x] create short usage instructions for owner / manager / technician
+- [x] create repeatable QA checklist
+- [x] create login / access instructions
+- [x] explain automation behavior in simple Romanian
+- [x] explain what each role is allowed to do
 
 ### 9. QA / testing discipline
-- [ ] create pre-demo smoke checklist
-- [ ] create post-change smoke checklist
-- [ ] create public flow retest checklist
-- [ ] create role retest checklist
-- [ ] define what must be checked before showing to a client
+- [x] create pre-demo smoke checklist
+- [x] create post-change smoke checklist
+- [x] create public flow retest checklist
+- [x] create role retest checklist
+- [x] define what must be checked before showing to a client
+- [x] implement Playwright smoke suite
+- [x] make smoke suite fully green
+- [x] confirm login/dashboard smoke path with test account
 
 ### 10. Strengthen sales demo
 - [x] prepare 1 realistic end-to-end scenario
-- [ ] incoming Instagram lead
-- [ ] manager sees lead
-- [ ] follow-up gets scheduled
-- [ ] reminder is triggered
-- [ ] lead moves toward booking
+- [x] incoming Instagram lead
+- [x] manager sees lead
+- [x] follow-up gets scheduled
+- [x] reminder is triggered
+- [x] lead moves toward booking
+- [x] clean live demo data for customer-facing walkthrough
+
+### 11. Current active move
+- [ ] commit and push the fully polished demo-ready checkpoint
+- [ ] rehearse one final live sales demo with the cleaned scenario
+- [ ] decide whether to start automation deepening or go to first real demo/sale
 
 ## Recommended Working Order
 
-1. UX / visual system
-2. Public-facing product layer
-3. Onboarding / usage layer
-4. QA / testing discipline
-5. Strengthen one full sales scenario
-6. Prepare mobile app only after the web + automation layer is stable
+1. commit the current checkpoint
+2. rehearse one final live sales scenario
+3. do the first real demo / client conversation
+4. deepen automation only after live feedback
+5. prepare mobile app only after the web + automation layer is stable
 
 ## Notes
 

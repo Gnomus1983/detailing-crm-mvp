@@ -709,10 +709,22 @@ textarea {
   margin: 0 0 6px;
 }
 
+.composer-hint-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f9fcfb 100%);
+}
+
+.leads-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(360px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
 .kanban-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
+  align-content: start;
 }
 
 .kanban-column {
@@ -827,6 +839,8 @@ textarea {
 .detail-card {
   display: grid;
   gap: 20px;
+  position: sticky;
+  top: 88px;
 }
 
 .detail-empty-card {
@@ -1172,8 +1186,13 @@ textarea {
   .clients-layout,
   .settings-layout,
   .auth-split,
+  .leads-workspace,
   .public-landing-card {
     grid-template-columns: 1fr;
+  }
+
+  .detail-card {
+    position: static;
   }
 }
 
