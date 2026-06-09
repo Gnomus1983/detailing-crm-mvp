@@ -20,9 +20,8 @@ function loadEnvValue(key: string) {
   return line.slice(key.length + 1).trim();
 }
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL ?? "https://knegynsaxsufwfbgqmoq.supabase.co";
-const supabaseAnonKey =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_NkyDeMuH_WmsJ-9wuvw7fA_Z4UL7fqt";
+const supabaseUrl = process.env.VITE_SUPABASE_URL ?? loadEnvValue("VITE_SUPABASE_URL");
+const supabaseAnonKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? loadEnvValue("VITE_SUPABASE_PUBLISHABLE_KEY");
 const publicRequestUrl = `${supabaseUrl}/functions/v1/public-request`;
 const testEmail = process.env.VITE_TEST_EMAIL ?? loadEnvValue("VITE_TEST_EMAIL");
 const testPassword = process.env.VITE_TEST_PASSWORD ?? loadEnvValue("VITE_TEST_PASSWORD");
@@ -72,6 +71,8 @@ test("dashboard is available after login", async ({ page }) => {
 });
 
 test("rate limiting returns 429 on the fourth public request", async ({ request }) => {
+  test.skip(!supabaseUrl || !supabaseAnonKey, "Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY to enable public endpoint smoke tests.");
+
   const ipSuffix = Math.floor(Math.random() * 200) + 20;
   const forwardedIp = `203.0.113.${ipSuffix}`;
   const statuses: number[] = [];

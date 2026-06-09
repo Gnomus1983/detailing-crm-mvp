@@ -6,6 +6,7 @@
 
   --color-accent: #2dc9a0;
   --color-accent-dark: #1fa882;
+  --color-accent-dark-bg: #1a2e2a;
   --color-accent-bg: #e8faf4;
   --color-accent-soft: rgba(45, 201, 160, 0.12);
   --color-accent-glow: rgba(45, 201, 160, 0.2);
@@ -19,8 +20,10 @@
   --color-surface: #ffffff;
   --color-surface-2: #ffffff;
   --color-surface-muted: #f9fafb;
+  --color-background-secondary: #f3f4f6;
 
   --color-text: #111827;
+  --color-text-primary: #111827;
   --color-text-strong: #0f172a;
   --color-text-muted: #6b7280;
   --color-text-inverse: #ffffff;

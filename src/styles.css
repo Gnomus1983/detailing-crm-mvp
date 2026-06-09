@@ -57,7 +57,7 @@ textarea {
   padding: 10px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--color-surface);
   color: var(--text);
 }
 
@@ -90,7 +90,7 @@ textarea {
 
 .button-primary {
   background: var(--accent);
-  color: #fff;
+  color: var(--color-text-inverse);
   font-weight: 700;
 }
 
@@ -139,7 +139,7 @@ textarea {
 }
 
 .logo-wordmark.inverse strong {
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .logo-mark {
@@ -165,7 +165,7 @@ textarea {
   padding: 14px 16px;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .notice-success {
@@ -208,13 +208,13 @@ textarea {
   overflow: hidden;
   box-shadow: var(--shadow);
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .auth-main-card,
 .public-form-card {
   padding: 42px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .auth-copy h1,
@@ -223,7 +223,7 @@ textarea {
   font-size: clamp(2rem, 3vw, 3rem);
   line-height: 1.05;
   letter-spacing: -0.04em;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .auth-copy p,
@@ -260,7 +260,7 @@ textarea {
 }
 
 .auth-switch button.active {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--text);
   box-shadow: var(--shadow-soft);
 }
@@ -301,7 +301,7 @@ textarea {
 .auth-divider span {
   position: relative;
   padding: 0 14px;
-  background: #fff;
+  background: var(--color-surface);
 }
 
 .auth-side-card {
@@ -312,8 +312,8 @@ textarea {
   justify-content: space-between;
   background:
     radial-gradient(circle at top left, rgba(45, 201, 160, 0.22), transparent 34%),
-    linear-gradient(180deg, #1a2e2a 0%, #101e1c 100%);
-  color: #fff;
+    linear-gradient(180deg, var(--color-accent-dark-bg) 0%, var(--color-text-strong) 100%);
+  color: var(--color-text-inverse);
 }
 
 .auth-side-top {
@@ -328,7 +328,7 @@ textarea {
 
 .auth-side-quote p {
   margin: 0 0 14px;
-  color: #fff;
+  color: var(--color-text-inverse);
   font-size: 0.95rem;
   line-height: 1.7;
 }
@@ -343,7 +343,7 @@ textarea {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  background: linear-gradient(180deg, #ffffff 0%, #f5fbf9 100%);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-accent-bg) 100%);
 }
 
 .public-pill-row {
@@ -378,7 +378,7 @@ textarea {
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 20px;
-  background: #fff;
+  background: var(--color-surface);
   border-bottom: 1px solid var(--line);
   position: sticky;
   top: 0;
@@ -494,7 +494,7 @@ textarea {
 .crm-summary-bar span {
   padding: 8px 12px;
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-surface);
   border: 1px solid var(--line);
   color: var(--muted);
   font-size: 0.84rem;
@@ -517,7 +517,7 @@ textarea {
 .page-header h1,
 .section-title h2 {
   margin: 0 0 6px;
-  color: #111827;
+  color: var(--color-text-primary);
 }
 
 .page-header h1 {
@@ -553,7 +553,7 @@ textarea {
 .note-card,
 .timeline-event,
 .service-card {
-  background: #fff;
+  background: var(--color-surface);
   border: 0.5px solid var(--line);
   border-radius: var(--radius-lg);
 }
@@ -593,7 +593,7 @@ textarea {
 
 .metric-card.accent strong,
 .metric-card.accent span {
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .mini-icon {
@@ -602,7 +602,7 @@ textarea {
   display: inline-grid;
   place-items: center;
   border-radius: 10px;
-  background: #f3f4f6;
+  background: var(--color-background-secondary);
   color: #374151;
   font-size: 0.72rem;
   font-weight: 800;
@@ -610,7 +610,7 @@ textarea {
 
 .mini-icon.accent {
   background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .data-table {
@@ -634,7 +634,7 @@ textarea {
 
 .table-head {
   padding: 14px 16px;
-  background: #fcfcfd;
+  background: var(--color-surface);
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 0.82rem;
@@ -643,7 +643,7 @@ textarea {
 
 .table-body-row {
   padding: 16px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-background-secondary);
 }
 
 .table-body-row:last-child {
@@ -651,7 +651,7 @@ textarea {
 }
 
 .table-body-row:hover {
-  background: #f9fafb;
+  background: var(--color-surface-muted);
 }
 
 .cell-strong {
@@ -710,7 +710,7 @@ textarea {
 }
 
 .composer-hint-card {
-  background: linear-gradient(180deg, #ffffff 0%, #f9fcfb 100%);
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-accent-bg) 100%);
 }
 
 .leads-workspace {
@@ -730,7 +730,7 @@ textarea {
 .kanban-column {
   padding: 12px;
   border-radius: var(--radius-lg);
-  background: #f9fafb;
+  background: var(--color-surface-muted);
   border: 1px solid transparent;
 }
 
@@ -745,7 +745,7 @@ textarea {
   justify-content: space-between;
   margin-bottom: 12px;
   padding-bottom: 12px;
-  border-bottom: 1px solid #edf0f2;
+  border-bottom: 1px solid var(--color-line);
 }
 
 .kanban-column-head strong {
@@ -886,7 +886,7 @@ textarea {
 .detail-card-item {
   padding: 16px;
   border-radius: var(--radius-lg);
-  background: #fff;
+  background: var(--color-surface);
   border: 0.5px solid var(--line);
 }
 
@@ -955,8 +955,8 @@ textarea {
   min-height: 34px;
   padding: 6px 12px;
   border-radius: 999px;
-  background: #f3f4f6;
-  color: #4b5563;
+  background: var(--color-background-secondary);
+  color: var(--color-text-muted);
   cursor: pointer;
 }
 

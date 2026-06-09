@@ -1987,7 +1987,7 @@ function ProtectedApp({ session, onSignOut }) {
             element={<SettingsPage webhookEnabled={Boolean(import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL)} role={role} />}
           />
         ) : null}
-        {permissions.nav.includes("/services") ? <Route path="/services" element={<ServicesPage services={services} />} /> : null}
+        <Route path="/services" element={<Navigate to="/leads" replace />} />
         <Route path="*" element={<Navigate to={defaultRoute} replace />} />
       </Routes>
     </AppLayout>
