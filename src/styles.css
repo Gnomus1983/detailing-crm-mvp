@@ -596,6 +596,35 @@ textarea {
   color: var(--color-text-inverse);
 }
 
+.month-summary-card {
+  background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-accent-bg) 100%);
+}
+
+.month-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.month-summary-stat {
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.month-summary-stat strong {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+.month-summary-stat span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .mini-icon {
   width: 30px;
   height: 30px;
@@ -652,6 +681,11 @@ textarea {
 
 .table-body-row:hover {
   background: var(--color-surface-muted);
+}
+
+.month-revenue-head,
+.month-revenue-row {
+  grid-template-columns: 1.5fr 0.7fr 0.9fr;
 }
 
 .cell-strong {
@@ -1129,6 +1163,53 @@ textarea {
   line-height: 1.7;
 }
 
+.service-card-head {
+  display: grid;
+  gap: 4px;
+}
+
+.service-card-head strong {
+  margin: 0;
+}
+
+.settings-edit-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.settings-toolbar-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-service-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.settings-checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.settings-checkbox input {
+  width: 18px;
+  min-height: 18px;
+  margin: 0;
+}
+
 .settings-nav-card {
   padding: 10px;
   align-self: start;
@@ -1182,6 +1263,11 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .month-summary-grid,
+  .settings-service-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .timeline-shell,
   .clients-layout,
   .settings-layout,
@@ -1222,6 +1308,11 @@ textarea {
     align-items: flex-start;
     flex-direction: column;
   }
+
+  .settings-toolbar-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
 }
 
 @media (max-width: 720px) {
@@ -1243,7 +1334,9 @@ textarea {
 
   .metrics-grid,
   .kanban-grid,
+  .month-summary-grid,
   .service-grid,
+  .settings-service-grid,
   .detail-grid,
   .form-grid.two-columns {
     grid-template-columns: 1fr;

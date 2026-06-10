@@ -28,6 +28,8 @@ const roleLabels = {
   detailer: "Мастер"
 };
 
+const roleOptions = ["owner", "manager", "detailer"];
+
 const rolePermissions = {
   owner: {
     nav: ["/dashboard", "/leads", "/clients", "/tasks", "/settings"],
@@ -175,6 +177,16 @@ function normalizePhone(value) {
 function getWhatsAppUrl(phone) {
   const digits = normalizePhone(phone).replace(/^\+/, "");
   return digits ? `https://wa.me/${digits}` : "#";
+}
+
+function createInviteSupabaseClient() {
+  return createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false
+    }
+  });
 }
 
 function formatPreferredSlot(dateValue, timeValue) {
@@ -754,6 +766,49 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
         <MetricCard icon="TK" label="Задачи открыты" value={metrics.openTasks} />
       </div>
 
+      <section className="surface-card month-summary-card">
+        <div className="section-title">
+          <div>
+            <span className="eyebrow">Р¤РёРЅР°РЅСЃС‹</span>
+            <h2>РС‚РѕРіРё РјРµСЃСЏС†Р°</h2>
+          </div>
+        </div>
+
+        <div className="month-summary-grid">
+          <article className="month-summary-stat">
+            <strong>{metrics.monthClosedLeads}</strong>
+            <span>Р—Р°РєСЂС‹С‚Рѕ Р·Р°СЏРІРѕРє</span>
+          </article>
+          <article className="month-summary-stat">
+            <strong>{formatCurrency(metrics.monthAverageTicket)}</strong>
+            <span>РЎСЂРµРґРЅРёР№ С‡РµРє</span>
+          </article>
+          <article className="month-summary-stat">
+            <strong>{formatCurrency(metrics.monthRevenue)}</strong>
+            <span>РљР°СЃСЃР° Р·Р° РјРµСЃСЏС†</span>
+          </article>
+        </div>
+
+        <div className="data-table compact-table">
+          <div className="table-head month-revenue-head">
+            <span>РЈСЃР»СѓРіР°</span>
+            <span>Р—Р°СЏРІРѕРє</span>
+            <span>РЎСѓРјРјР°</span>
+          </div>
+          {metrics.monthServiceRevenue.length ? (
+            metrics.monthServiceRevenue.map((item) => (
+              <div key={item.name} className="table-body-row month-revenue-row">
+                <span className="cell-strong">{item.name}</span>
+                <span>{item.count}</span>
+                <span className="amount-cell">{formatCurrency(item.total)}</span>
+              </div>
+            ))
+          ) : (
+            <div className="table-empty-state">Р’ СЌС‚РѕРј РјРµСЃСЏС†Рµ РїРѕРєР° РЅРµС‚ Р·Р°РєСЂС‹С‚С‹С… Р·Р°СЏРІРѕРє РґР»СЏ РєР°СЃСЃС‹.</div>
+          )}
+        </div>
+      </section>
+
       <section className="surface-card">
         <div className="section-title">
           <div>
@@ -949,7 +1004,8 @@ function LeadsPage({
   statusSavingId,
   updateLeadStatus,
   updateLeadFollowUp,
-  addLeadNote
+  addLeadNote,
+  onPhoneAction
 }) {
   const [search, setSearch] = useState("");
   const [showComposer, setShowComposer] = useState(false);
@@ -1068,6 +1124,7 @@ function LeadsPage({
           leadEvents={selectedLeadEvents}
           currentUserName={currentUserName}
           permissions={permissions}
+          onPhoneAction={onPhoneAction}
           statusSavingId={statusSavingId}
           updateLeadStatus={updateLeadStatus}
           updateLeadFollowUp={updateLeadFollowUp}
@@ -1094,7 +1151,7 @@ function TimelineEvent({ item, currentUserName }) {
   );
 }
 
-function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, statusSavingId, updateLeadStatus, updateLeadFollowUp, addLeadNote }) {
+function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhoneAction, statusSavingId, updateLeadStatus, updateLeadFollowUp, addLeadNote }) {
   const [note, setNote] = useState("");
   const [followUpInput, setFollowUpInput] = useState("");
   const [savingFollowUp, setSavingFollowUp] = useState(false);
@@ -1165,10 +1222,15 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, status
         </div>
 
         <div className="client-hero-actions">
-          <a className="button button-outline" href={lead.clients?.phone ? `tel:${lead.clients.phone}` : "#"}>
+          <button type="button" className="button button-outline" onClick={() => onPhoneAction?.(lead.clients?.phone)}>
             Позвонить
-          </a>
-          <a className="button button-outline" href={lead.clients?.email ? `mailto:${lead.clients.email}` : "#"}>
+          </button>
+          <a
+            className="button button-outline"
+            href={lead.clients?.phone ? getWhatsAppUrl(lead.clients.phone) : "#"}
+            target="_blank"
+            rel="noreferrer"
+          >
             Написать
           </a>
           <StatusBadge status={lead.status} />
@@ -1300,7 +1362,7 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, status
   );
 }
 
-function ClientsPage({ clients, leads, leadEvents }) {
+function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
   const [selectedClientId, setSelectedClientId] = useState(clients[0]?.id || null);
   const [activeTab, setActiveTab] = useState("history");
 
@@ -1370,10 +1432,15 @@ function ClientsPage({ clients, leads, leadEvents }) {
                   </div>
                 </div>
                 <div className="client-hero-actions">
-                  <a className="button button-outline" href={selectedClient.phone ? `tel:${selectedClient.phone}` : "#"}>
+                  <button type="button" className="button button-outline" onClick={() => onPhoneAction?.(selectedClient.phone)}>
                     Позвонить
-                  </a>
-                  <a className="button button-outline" href={selectedClient.email ? `mailto:${selectedClient.email}` : "#"}>
+                  </button>
+                  <a
+                    className="button button-outline"
+                    href={selectedClient.phone ? getWhatsAppUrl(selectedClient.phone) : "#"}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
                     Написать
                   </a>
                   <NavLink to="/leads" className="button button-primary">
@@ -1630,6 +1697,776 @@ function SettingsPage({ webhookEnabled, role }) {
   );
 }
 
+function LiveSettingsPage({
+  webhookEnabled,
+  role,
+  profile,
+  teamProfiles,
+  services,
+  profileSaving,
+  teamSaving,
+  serviceSavingId,
+  creatingTeamMember,
+  creatingService,
+  applyingDemoPricing,
+  passwordSaving,
+  onSaveProfile,
+  onUpdateTeamMember,
+  onDeleteTeamMember,
+  onCreateTeamMember,
+  onUpdateService,
+  onCreateService,
+  onApplyDemoPricing,
+  onChangePassword
+}) {
+  const [activeSection, setActiveSection] = useState("profile");
+  const [profileForm, setProfileForm] = useState({ full_name: "", telegram_chat_id: "" });
+  const [draftProfiles, setDraftProfiles] = useState({});
+  const [newTeamMember, setNewTeamMember] = useState({ full_name: "", email: "", password: "", role: "manager", telegram_chat_id: "" });
+  const [draftServices, setDraftServices] = useState({});
+  const [newService, setNewService] = useState({ name: "", base_price: "", duration_minutes: "", is_active: true });
+  const [passwordForm, setPasswordForm] = useState({ next: "", confirm: "" });
+
+  async function saveProfileSettings(input) {
+    setProfileSaving(true);
+    setError("");
+    setSaveMessage("");
+
+    const payload = {
+      full_name: input.full_name.trim(),
+      telegram_chat_id: input.telegram_chat_id.trim() || null
+    };
+
+    const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", session.user.id).select("*").maybeSingle();
+
+    if (updateError) {
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ.");
+      setProfileSaving(false);
+      return false;
+    }
+
+    setProfile(data || null);
+    setTeamProfiles((current) => current.map((member) => (member.id === session.user.id ? { ...member, ...payload } : member)));
+    setSaveMessage("РџСЂРѕС„РёР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
+    setProfileSaving(false);
+    return true;
+  }
+
+  async function updateTeamMember(memberId, input) {
+    setTeamSaving(true);
+    setError("");
+    setSaveMessage("");
+
+    const payload = {
+      full_name: input.full_name.trim(),
+      role: input.role,
+      telegram_chat_id: input.telegram_chat_id.trim() || null
+    };
+
+    const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", memberId).select("*").maybeSingle();
+
+    if (updateError) {
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      setTeamSaving(false);
+      return false;
+    }
+
+    setTeamProfiles((current) => current.map((member) => (member.id === memberId ? { ...member, ...data } : member)));
+    if (memberId === session.user.id) {
+      setProfile((current) => (current ? { ...current, ...data } : current));
+    }
+    setSaveMessage("РљРѕРјР°РЅРґР° РѕР±РЅРѕРІР»РµРЅР°.");
+    setTeamSaving(false);
+    return true;
+  }
+
+  async function deleteTeamMember(memberId) {
+    setTeamSaving(true);
+    setError("");
+    setSaveMessage("");
+
+    const { error: deleteError } = await supabase.from("profiles").delete().eq("id", memberId);
+
+    if (deleteError) {
+      setError(deleteError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      setTeamSaving(false);
+      return false;
+    }
+
+    setTeamProfiles((current) => current.filter((member) => member.id !== memberId));
+    setSaveMessage("РЈС‡Р°СЃС‚РЅРёРє СѓРґР°Р»С‘РЅ.");
+    setTeamSaving(false);
+    return true;
+  }
+
+  async function createTeamMember(input) {
+    setCreatingTeamMember(true);
+    setError("");
+    setSaveMessage("");
+
+    try {
+      const inviteClient = createInviteSupabaseClient();
+      const { data: signUpData, error: signUpError } = await inviteClient.auth.signUp({
+        email: input.email.trim(),
+        password: input.password.trim(),
+        options: {
+          data: {
+            full_name: input.full_name.trim()
+          }
+        }
+      });
+
+      if (signUpError) {
+        throw signUpError;
+      }
+
+      const nextUserId = signUpData.user?.id;
+      if (!nextUserId) {
+        throw new Error("РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ id РЅРѕРІРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.");
+      }
+
+      const payload = {
+        id: nextUserId,
+        email: input.email.trim(),
+        full_name: input.full_name.trim(),
+        role: input.role,
+        telegram_chat_id: input.telegram_chat_id.trim() || null
+      };
+
+      const { data, error: upsertError } = await supabase.from("profiles").upsert(payload).select("*").maybeSingle();
+
+      if (upsertError) {
+        throw upsertError;
+      }
+
+      setTeamProfiles((current) => {
+        const exists = current.some((member) => member.id === nextUserId);
+        if (exists) {
+          return current.map((member) => (member.id === nextUserId ? { ...member, ...data } : member));
+        }
+        return [...current, data || payload];
+      });
+      setSaveMessage("РќРѕРІС‹Р№ СѓС‡Р°СЃС‚РЅРёРє СЃРѕР·РґР°РЅ.");
+      return true;
+    } catch (createError) {
+      setError(createError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      return false;
+    } finally {
+      setCreatingTeamMember(false);
+    }
+  }
+
+  async function updateServiceSettings(serviceId, input) {
+    setServiceSavingId(serviceId);
+    setError("");
+    setSaveMessage("");
+
+    const payload = {
+      name: input.name.trim(),
+      base_price: Number(input.base_price || 0),
+      duration_minutes: Number(input.duration_minutes || 0),
+      is_active: Boolean(input.is_active)
+    };
+
+    const { data, error: updateError } = await supabase.from("services").update(payload).eq("id", serviceId).select("*").maybeSingle();
+
+    if (updateError) {
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
+      setServiceSavingId(null);
+      return false;
+    }
+
+    setServices((current) => current.map((service) => (service.id === serviceId ? { ...service, ...data } : service)));
+    setSaveMessage("РЈСЃР»СѓРіР° РѕР±РЅРѕРІР»РµРЅР°.");
+    setServiceSavingId(null);
+    return true;
+  }
+
+  async function createServiceSettings(input) {
+    setCreatingService(true);
+    setError("");
+    setSaveMessage("");
+
+    const payload = {
+      name: input.name.trim(),
+      base_price: Number(input.base_price || 0),
+      duration_minutes: Number(input.duration_minutes || 0),
+      is_active: Boolean(input.is_active)
+    };
+
+    const { data, error: insertError } = await supabase.from("services").insert(payload).select("*").maybeSingle();
+
+    if (insertError) {
+      setError(insertError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РґРѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
+      setCreatingService(false);
+      return false;
+    }
+
+    setServices((current) => [...current, data || payload].sort((a, b) => a.name.localeCompare(b.name)));
+    setSaveMessage("РќРѕРІР°СЏ СѓСЃР»СѓРіР° РґРѕР±Р°РІР»РµРЅР°.");
+    setCreatingService(false);
+    return true;
+  }
+
+  async function applyDemoPricing() {
+    setApplyingDemoPricing(true);
+    setError("");
+    setSaveMessage("");
+
+    try {
+      for (const preset of demoServicePresets) {
+        const existing = services.find((service) => service.name.toLowerCase() === preset.name.toLowerCase());
+        if (existing) {
+          const { error: updateError } = await supabase
+            .from("services")
+            .update({
+              base_price: preset.base_price,
+              duration_minutes: preset.duration_minutes,
+              is_active: true
+            })
+            .eq("id", existing.id);
+          if (updateError) {
+            throw updateError;
+          }
+        } else {
+          const { error: insertError } = await supabase.from("services").insert({
+            name: preset.name,
+            base_price: preset.base_price,
+            duration_minutes: preset.duration_minutes,
+            is_active: true
+          });
+          if (insertError) {
+            throw insertError;
+          }
+        }
+      }
+
+      await loadData(selectedLeadId);
+      setSaveMessage("Р”РµРјРѕ-С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё РѕР±РЅРѕРІР»РµРЅС‹.");
+      return true;
+    } catch (applyError) {
+      setError(applyError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ РґРµРјРѕ-С†РµРЅС‹.");
+      return false;
+    } finally {
+      setApplyingDemoPricing(false);
+    }
+  }
+
+  async function changePassword(nextPassword) {
+    setPasswordSaving(true);
+    setError("");
+    setSaveMessage("");
+
+    const { error: updateError } = await supabase.auth.updateUser({ password: nextPassword });
+
+    if (updateError) {
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ.");
+      setPasswordSaving(false);
+      return false;
+    }
+
+    setSaveMessage("РџР°СЂРѕР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
+    setPasswordSaving(false);
+    return true;
+  }
+
+  async function handlePhoneAction(phone) {
+    const normalized = normalizePhone(phone);
+    if (!normalized) {
+      setError("РЈ РєР»РёРµРЅС‚Р° РЅРµС‚ РЅРѕРјРµСЂР° С‚РµР»РµС„РѕРЅР°.");
+      return;
+    }
+
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(normalized);
+      }
+    } catch {
+      // ignore clipboard errors
+    }
+
+    window.location.href = `tel:${normalized}`;
+    setSaveMessage(`РќРѕРјРµСЂ ${normalized} РїРµСЂРµРґР°РЅ РІ СЃРёСЃС‚РµРјРЅС‹Р№ РЅР°Р±РѕСЂ.`);
+  }
+
+  useEffect(() => {
+    setProfileForm({
+      full_name: profile?.full_name || "",
+      telegram_chat_id: profile?.telegram_chat_id || ""
+    });
+  }, [profile?.full_name, profile?.telegram_chat_id]);
+
+  useEffect(() => {
+    setDraftProfiles(
+      Object.fromEntries(
+        (teamProfiles || []).map((member) => [
+          member.id,
+          {
+            full_name: member.full_name || "",
+            role: member.role || "manager",
+            telegram_chat_id: member.telegram_chat_id || ""
+          }
+        ])
+      )
+    );
+  }, [teamProfiles]);
+
+  useEffect(() => {
+    setDraftServices(
+      Object.fromEntries(
+        (services || []).map((service) => [
+          service.id,
+          {
+            name: service.name || "",
+            base_price: service.base_price ?? "",
+            duration_minutes: service.duration_minutes ?? "",
+            is_active: service.is_active !== false
+          }
+        ])
+      )
+    );
+  }, [services]);
+
+  const managerProfiles = (teamProfiles || []).filter((member) => member.role === "manager");
+
+  async function handleProfileSubmit(event) {
+    event.preventDefault();
+    await onSaveProfile(profileForm);
+  }
+
+  async function handleCreateTeamMember(event) {
+    event.preventDefault();
+    const created = await onCreateTeamMember(newTeamMember);
+    if (created) {
+      setNewTeamMember({ full_name: "", email: "", password: "", role: "manager", telegram_chat_id: "" });
+    }
+  }
+
+  async function handleCreateService(event) {
+    event.preventDefault();
+    const created = await onCreateService(newService);
+    if (created) {
+      setNewService({ name: "", base_price: "", duration_minutes: "", is_active: true });
+    }
+  }
+
+  async function handlePasswordSubmit(event) {
+    event.preventDefault();
+    if (!passwordForm.next || passwordForm.next !== passwordForm.confirm) {
+      return;
+    }
+
+    const changed = await onChangePassword(passwordForm.next);
+    if (changed) {
+      setPasswordForm({ next: "", confirm: "" });
+    }
+  }
+
+  function renderSection() {
+    if (activeSection === "profile") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>РџСЂРѕС„РёР»СЊ</strong>
+            <form className="settings-edit-form" onSubmit={handleProfileSubmit}>
+              <label>
+                РРјСЏ РІ CRM
+                <input
+                  value={profileForm.full_name}
+                  onChange={(event) => setProfileForm((current) => ({ ...current, full_name: event.target.value }))}
+                  placeholder="РРјСЏ РІР»Р°РґРµР»СЊС†Р° РёР»Рё РјРµРЅРµРґР¶РµСЂР°"
+                />
+              </label>
+              <label>
+                Telegram chat id
+                <input
+                  value={profileForm.telegram_chat_id}
+                  onChange={(event) => setProfileForm((current) => ({ ...current, telegram_chat_id: event.target.value }))}
+                  placeholder="Р”Р»СЏ Р»РёС‡РЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№"
+                />
+              </label>
+              <div className="settings-action-row">
+                <span className="hint-text">Р¢РµРєСѓС‰Р°СЏ СЂРѕР»СЊ: {roleLabels[role] || roleLabels.manager}</span>
+                <button type="submit" className="button button-primary" disabled={profileSaving}>
+                  {profileSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ"}
+                </button>
+              </div>
+            </form>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "team") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <div className="settings-toolbar-card">
+              <div>
+                <strong>РљРѕРјР°РЅРґР°</strong>
+                <p>РњРµРЅСЏР№С‚Рµ РёРјСЏ, СЂРѕР»СЊ Рё Telegram РґР»СЏ owner, manager Рё detailer.</p>
+              </div>
+            </div>
+            <div className="service-grid settings-service-grid">
+              {(teamProfiles || []).map((member) => {
+                const draft = draftProfiles[member.id] || {
+                  full_name: member.full_name || "",
+                  role: member.role || "manager",
+                  telegram_chat_id: member.telegram_chat_id || ""
+                };
+
+                return (
+                  <article key={member.id} className="service-card">
+                    <div className="service-card-head">
+                      <strong>{member.full_name || member.email || "РЈС‡Р°СЃС‚РЅРёРє"}</strong>
+                      <span>{member.email || "Р‘РµР· email"}</span>
+                    </div>
+                    <div className="settings-edit-form">
+                      <label>
+                        РРјСЏ
+                        <input
+                          value={draft.full_name}
+                          onChange={(event) =>
+                            setDraftProfiles((current) => ({
+                              ...current,
+                              [member.id]: { ...draft, full_name: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Р РѕР»СЊ
+                        <select
+                          value={draft.role}
+                          onChange={(event) =>
+                            setDraftProfiles((current) => ({
+                              ...current,
+                              [member.id]: { ...draft, role: event.target.value }
+                            }))
+                          }
+                        >
+                          {roleOptions.map((option) => (
+                            <option key={option} value={option}>
+                              {roleLabels[option]}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        Telegram chat id
+                        <input
+                          value={draft.telegram_chat_id}
+                          onChange={(event) =>
+                            setDraftProfiles((current) => ({
+                              ...current,
+                              [member.id]: { ...draft, telegram_chat_id: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <div className="settings-action-row">
+                        <button
+                          type="button"
+                          className="button button-primary"
+                          disabled={teamSaving}
+                          onClick={() => onUpdateTeamMember(member.id, draft)}
+                        >
+                          {teamSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ"}
+                        </button>
+                        {profile?.id !== member.id ? (
+                          <button
+                            type="button"
+                            className="button button-outline"
+                            disabled={teamSaving}
+                            onClick={() => onDeleteTeamMember(member.id)}
+                          >
+                            РЈРґР°Р»РёС‚СЊ
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="settings-form-card">
+            <strong>Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°</strong>
+            <form className="settings-edit-form" onSubmit={handleCreateTeamMember}>
+              <label>
+                РРјСЏ
+                <input
+                  value={newTeamMember.full_name}
+                  onChange={(event) => setNewTeamMember((current) => ({ ...current, full_name: event.target.value }))}
+                />
+              </label>
+              <label>
+                Email
+                <input
+                  type="email"
+                  value={newTeamMember.email}
+                  onChange={(event) => setNewTeamMember((current) => ({ ...current, email: event.target.value }))}
+                />
+              </label>
+              <label>
+                Р’СЂРµРјРµРЅРЅС‹Р№ РїР°СЂРѕР»СЊ
+                <input
+                  type="password"
+                  value={newTeamMember.password}
+                  onChange={(event) => setNewTeamMember((current) => ({ ...current, password: event.target.value }))}
+                />
+              </label>
+              <label>
+                Р РѕР»СЊ
+                <select
+                  value={newTeamMember.role}
+                  onChange={(event) => setNewTeamMember((current) => ({ ...current, role: event.target.value }))}
+                >
+                  {roleOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {roleLabels[option]}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Telegram chat id
+                <input
+                  value={newTeamMember.telegram_chat_id}
+                  onChange={(event) => setNewTeamMember((current) => ({ ...current, telegram_chat_id: event.target.value }))}
+                />
+              </label>
+              <button type="submit" className="button button-primary" disabled={creatingTeamMember}>
+                {creatingTeamMember ? "РЎРѕР·РґР°С‘Рј..." : "РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚"}
+              </button>
+            </form>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "billing") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <div className="settings-toolbar-card">
+              <div>
+                <strong>Р”РµРјРѕ-РїСЂР°Р№СЃ</strong>
+                <p>РџРѕРґС‚СЏРіРёРІР°РµРј СЂРµР°Р»РёСЃС‚РёС‡РЅС‹Рµ С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё, С‡С‚РѕР±С‹ РїРѕРєР°Р·Р°С‚СЊ РєР°СЃСЃСѓ Рё СЃСЂРµРґРЅРёР№ С‡РµРє Р·Р° РјРµСЃСЏС†.</p>
+              </div>
+              <button type="button" className="button button-primary" disabled={applyingDemoPricing} onClick={onApplyDemoPricing}>
+                {applyingDemoPricing ? "РћР±РЅРѕРІР»СЏРµРј..." : "Р—Р°РіСЂСѓР·РёС‚СЊ РґРµРјРѕ-С†РµРЅС‹"}
+              </button>
+            </div>
+          </article>
+
+          <article className="settings-form-card">
+            <strong>РЈСЃР»СѓРіРё</strong>
+            <div className="service-grid settings-service-grid">
+              {(services || []).map((service) => {
+                const draft = draftServices[service.id] || {
+                  name: service.name || "",
+                  base_price: service.base_price ?? "",
+                  duration_minutes: service.duration_minutes ?? "",
+                  is_active: service.is_active !== false
+                };
+
+                return (
+                  <article key={service.id} className="service-card">
+                    <div className="settings-edit-form">
+                      <label>
+                        РќР°Р·РІР°РЅРёРµ
+                        <input
+                          value={draft.name}
+                          onChange={(event) =>
+                            setDraftServices((current) => ({
+                              ...current,
+                              [service.id]: { ...draft, name: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Р¦РµРЅР° (MDL)
+                        <input
+                          type="number"
+                          min="0"
+                          value={draft.base_price}
+                          onChange={(event) =>
+                            setDraftServices((current) => ({
+                              ...current,
+                              [service.id]: { ...draft, base_price: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <label>
+                        Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
+                        <input
+                          type="number"
+                          min="0"
+                          value={draft.duration_minutes}
+                          onChange={(event) =>
+                            setDraftServices((current) => ({
+                              ...current,
+                              [service.id]: { ...draft, duration_minutes: event.target.value }
+                            }))
+                          }
+                        />
+                      </label>
+                      <label className="settings-checkbox">
+                        <input
+                          type="checkbox"
+                          checked={draft.is_active}
+                          onChange={(event) =>
+                            setDraftServices((current) => ({
+                              ...current,
+                              [service.id]: { ...draft, is_active: event.target.checked }
+                            }))
+                          }
+                        />
+                        <span>РђРєС‚РёРІРЅР°СЏ СѓСЃР»СѓРіР°</span>
+                      </label>
+                      <button
+                        type="button"
+                        className="button button-primary"
+                        disabled={serviceSavingId === service.id}
+                        onClick={() => onUpdateService(service.id, draft)}
+                      >
+                        {serviceSavingId === service.id ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ СѓСЃР»СѓРіСѓ"}
+                      </button>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </article>
+
+          <article className="settings-form-card">
+            <strong>РќРѕРІР°СЏ СѓСЃР»СѓРіР°</strong>
+            <form className="settings-edit-form" onSubmit={handleCreateService}>
+              <label>
+                РќР°Р·РІР°РЅРёРµ
+                <input value={newService.name} onChange={(event) => setNewService((current) => ({ ...current, name: event.target.value }))} />
+              </label>
+              <label>
+                Р¦РµРЅР° (MDL)
+                <input
+                  type="number"
+                  min="0"
+                  value={newService.base_price}
+                  onChange={(event) => setNewService((current) => ({ ...current, base_price: event.target.value }))}
+                />
+              </label>
+              <label>
+                Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
+                <input
+                  type="number"
+                  min="0"
+                  value={newService.duration_minutes}
+                  onChange={(event) => setNewService((current) => ({ ...current, duration_minutes: event.target.value }))}
+                />
+              </label>
+              <label className="settings-checkbox">
+                <input
+                  type="checkbox"
+                  checked={newService.is_active}
+                  onChange={(event) => setNewService((current) => ({ ...current, is_active: event.target.checked }))}
+                />
+                <span>РЎСЂР°Р·Сѓ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ</span>
+              </label>
+              <button type="submit" className="button button-primary" disabled={creatingService}>
+                {creatingService ? "РЎРѕР·РґР°С‘Рј..." : "Р”РѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ"}
+              </button>
+            </form>
+          </article>
+        </div>
+      );
+    }
+
+    if (activeSection === "integrations") {
+      return (
+        <div className="settings-panel-stack">
+          <article className="settings-form-card">
+            <strong>Webhook automation</strong>
+            <p>
+              {webhookEnabled
+                ? "Р’РЅРµС€РЅРёР№ webhook РІРєР»СЋС‡С‘РЅ. CRM РѕС‚РїСЂР°РІР»СЏРµС‚ СЃРѕР±С‹С‚РёСЏ РїРѕ Р·Р°СЏРІРєР°Рј РІ automation-layer."
+                : "Webhook РЅРµ РЅР°СЃС‚СЂРѕРµРЅ. РћСЃРЅРѕРІРЅРѕР№ follow-up Рё Telegram live-РѕРїРѕРІРµС‰РµРЅРёСЏ РѕСЃС‚Р°СЋС‚СЃСЏ РЅР° Supabase Edge Functions."}
+            </p>
+          </article>
+          <article className="settings-form-card">
+            <strong>Telegram</strong>
+            <p>Chat id РјРµРЅРµРґР¶РµСЂРѕРІ: {managerProfiles.length ? managerProfiles.map((member) => member.telegram_chat_id || "РЅРµ СѓРєР°Р·Р°РЅ").join(", ") : "РїРѕРєР° РЅРµС‚"}.</p>
+          </article>
+        </div>
+      );
+    }
+
+    return (
+      <div className="settings-panel-stack">
+        <article className="settings-form-card">
+          <strong>РЎРјРµРЅР° РїР°СЂРѕР»СЏ</strong>
+          <form className="settings-edit-form" onSubmit={handlePasswordSubmit}>
+            <label>
+              РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ
+              <input
+                type="password"
+                value={passwordForm.next}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, next: event.target.value }))}
+              />
+            </label>
+            <label>
+              РџРѕРІС‚РѕСЂРёС‚Рµ РїР°СЂРѕР»СЊ
+              <input
+                type="password"
+                value={passwordForm.confirm}
+                onChange={(event) => setPasswordForm((current) => ({ ...current, confirm: event.target.value }))}
+              />
+            </label>
+            <button
+              type="submit"
+              className="button button-primary"
+              disabled={passwordSaving || !passwordForm.next || passwordForm.next !== passwordForm.confirm}
+            >
+              {passwordSaving ? "РћР±РЅРѕРІР»СЏРµРј..." : "РЎРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ"}
+            </button>
+          </form>
+        </article>
+      </div>
+    );
+  }
+
+  return (
+    <section className="page-stack">
+      <div className="page-header">
+        <div>
+          <h1>РќР°СЃС‚СЂРѕР№РєРё</h1>
+          <p>Р‘Р»РѕРє РєРѕРЅС„РёРіСѓСЂР°С†РёРё CRM, РєРѕРјР°РЅРґС‹, РёРЅС‚РµРіСЂР°С†РёР№ Рё РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё.</p>
+        </div>
+      </div>
+
+      <div className="settings-layout">
+        <aside className="surface-card settings-nav-card">
+          {settingsSections.map((section) => (
+            <button
+              key={section}
+              type="button"
+              className={activeSection === section ? "settings-nav-item active" : "settings-nav-item"}
+              onClick={() => setActiveSection(section)}
+            >
+              {settingsSectionLabels[section]}
+            </button>
+          ))}
+        </aside>
+
+        <section className="surface-card settings-content-card">{renderSection()}</section>
+      </div>
+    </section>
+  );
+}
+
 function ProtectedApp({ session, onSignOut }) {
   const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
@@ -1637,9 +2474,17 @@ function ProtectedApp({ session, onSignOut }) {
   const [services, setServices] = useState([]);
   const [leadEvents, setLeadEvents] = useState([]);
   const [profile, setProfile] = useState(null);
+  const [teamProfiles, setTeamProfiles] = useState([]);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
   const [creatingLead, setCreatingLead] = useState(false);
   const [statusSavingId, setStatusSavingId] = useState(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [teamSaving, setTeamSaving] = useState(false);
+  const [serviceSavingId, setServiceSavingId] = useState(null);
+  const [creatingTeamMember, setCreatingTeamMember] = useState(false);
+  const [creatingService, setCreatingService] = useState(false);
+  const [applyingDemoPricing, setApplyingDemoPricing] = useState(false);
+  const [passwordSaving, setPasswordSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [error, setError] = useState("");
   const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
@@ -1656,7 +2501,8 @@ function ProtectedApp({ session, onSignOut }) {
         { data: clientsData, error: clientsError },
         { data: servicesData, error: servicesError },
         { data: leadEventsData, error: leadEventsError },
-        { data: profileData, error: profileError }
+        { data: profileData, error: profileError },
+        { data: teamProfilesData, error: teamProfilesError }
       ] = await Promise.all([
         supabase
           .from("leads")
@@ -1678,7 +2524,11 @@ function ProtectedApp({ session, onSignOut }) {
           .from("profiles")
           .select("*")
           .eq("id", session.user.id)
-          .maybeSingle()
+          .maybeSingle(),
+        supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: true })
       ]);
 
       if (leadsError) {
@@ -1701,11 +2551,16 @@ function ProtectedApp({ session, onSignOut }) {
         throw profileError;
       }
 
+      if (teamProfilesError) {
+        throw teamProfilesError;
+      }
+
       setLeads(leadsData || []);
       setClients(clientsData || []);
       setServices(servicesData || []);
       setLeadEvents(leadEventsData || []);
       setProfile(profileData || null);
+      setTeamProfiles(teamProfilesData || []);
       setSelectedLeadId((current) => preferredLeadId || current || leadsData?.[0]?.id || null);
     } catch (loadError) {
       setError(loadError.message || "Не удалось загрузить данные.");
@@ -1939,11 +2794,25 @@ function ProtectedApp({ session, onSignOut }) {
     const newCount = visibleLeads.filter((lead) => lead.status === "new").length;
     const followUpCount = visibleLeads.filter((lead) => lead.follow_up_at && new Date(lead.follow_up_at) <= now).length;
     const openTasks = visibleLeads.filter((lead) => getLeadStageKey(lead.status) === "in_progress" || lead.follow_up_at).length;
-    const monthRevenue = visibleLeads
-      .filter((lead) => lead.status === "done" && String(lead.created_at || "").slice(0, 7) === monthKey)
-      .reduce((total, lead) => total + Number(lead.estimated_price || 0), 0);
+    const monthDoneLeads = visibleLeads.filter(
+      (lead) => getLeadStageKey(lead.status) === "done" && String(lead.updated_at || lead.created_at || "").slice(0, 7) === monthKey
+    );
+    const monthRevenue = monthDoneLeads.reduce((total, lead) => total + Number(lead.estimated_price || 0), 0);
+    const monthClosedLeads = monthDoneLeads.length;
+    const monthAverageTicket = monthClosedLeads ? monthRevenue / monthClosedLeads : 0;
+    const monthServiceRevenue = Object.values(
+      monthDoneLeads.reduce((accumulator, lead) => {
+        const key = lead.services?.name || "Р‘РµР· СѓСЃР»СѓРіРё";
+        if (!accumulator[key]) {
+          accumulator[key] = { name: key, count: 0, total: 0 };
+        }
+        accumulator[key].count += 1;
+        accumulator[key].total += Number(lead.estimated_price || 0);
+        return accumulator;
+      }, {})
+    ).sort((a, b) => b.total - a.total);
 
-    return { clientsCount, todayLeads, newCount, followUpCount, openTasks, monthRevenue };
+    return { clientsCount, todayLeads, newCount, followUpCount, openTasks, monthRevenue, monthClosedLeads, monthAverageTicket, monthServiceRevenue };
   }, [clients.length, visibleLeads]);
 
   const defaultRoute = permissions.nav[0] || "/dashboard";
@@ -1991,18 +2860,45 @@ function ProtectedApp({ session, onSignOut }) {
                 updateLeadStatus={updateLeadStatus}
                 updateLeadFollowUp={updateLeadFollowUp}
                 addLeadNote={addLeadNote}
+                onPhoneAction={handlePhoneAction}
               />
             }
           />
         ) : null}
         {permissions.nav.includes("/clients") ? (
-          <Route path="/clients" element={<ClientsPage clients={clients} leads={visibleLeads} leadEvents={visibleLeadEvents} />} />
+          <Route
+            path="/clients"
+            element={<ClientsPage clients={clients} leads={visibleLeads} leadEvents={visibleLeadEvents} onPhoneAction={handlePhoneAction} />}
+          />
         ) : null}
         {permissions.nav.includes("/tasks") ? <Route path="/tasks" element={<TasksPage leads={visibleLeads} />} /> : null}
         {permissions.nav.includes("/settings") ? (
           <Route
             path="/settings"
-            element={<SettingsPage webhookEnabled={Boolean(import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL)} role={role} />}
+            element={
+              <LiveSettingsPage
+                webhookEnabled={Boolean(import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL)}
+                role={role}
+                profile={profile}
+                teamProfiles={teamProfiles}
+                services={services}
+                profileSaving={profileSaving}
+                teamSaving={teamSaving}
+                serviceSavingId={serviceSavingId}
+                creatingTeamMember={creatingTeamMember}
+                creatingService={creatingService}
+                applyingDemoPricing={applyingDemoPricing}
+                passwordSaving={passwordSaving}
+                onSaveProfile={saveProfileSettings}
+                onUpdateTeamMember={updateTeamMember}
+                onDeleteTeamMember={deleteTeamMember}
+                onCreateTeamMember={createTeamMember}
+                onUpdateService={updateServiceSettings}
+                onCreateService={createServiceSettings}
+                onApplyDemoPricing={applyDemoPricing}
+                onChangePassword={changePassword}
+              />
+            }
           />
         ) : null}
         <Route path="/services" element={<Navigate to="/leads" replace />} />
