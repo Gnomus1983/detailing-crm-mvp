@@ -1,3 +1,4 @@
+import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import {
@@ -49,6 +50,17 @@ const statusOptions = ["new", "contacted", "quoted", "scheduled", "in_progress",
 const sourceOptions = ["manual", "landing", "instagram", "telegram", "whatsapp", "phone", "facebook", "other"];
 const clientTabs = ["history", "leads", "notes"];
 const settingsSections = ["profile", "team", "billing", "integrations", "security"];
+const demoServicePresets = [
+  { name: "Spalare exterioara", base_price: 600, duration_minutes: 60 },
+  { name: "Curatare salon", base_price: 1200, duration_minutes: 180 },
+  { name: "Spalare detaliata", base_price: 800, duration_minutes: 90 },
+  { name: "Detailing interior", base_price: 1800, duration_minutes: 180 },
+  { name: "Polizare completa", base_price: 2800, duration_minutes: 300 },
+  { name: "Detailing complet", base_price: 4200, duration_minutes: 360 },
+  { name: "Ceramica", base_price: 4500, duration_minutes: 360 },
+  { name: "Polizare + Ceramica", base_price: 6000, duration_minutes: 480 },
+  { name: "Consultatie coating ceramic", base_price: 300, duration_minutes: 30 }
+];
 
 const statusLabels = {
   new: "Новая",
@@ -98,12 +110,12 @@ const settingsSectionLabels = {
 
 function formatCurrency(value) {
   if (value == null || value === "") {
-    return "0 EUR";
+    return "0 MDL";
   }
 
-  return new Intl.NumberFormat("ru-RU", {
+  return new Intl.NumberFormat("ro-MD", {
     style: "currency",
-    currency: "EUR",
+    currency: "MDL",
     maximumFractionDigits: 0
   }).format(Number(value));
 }
@@ -154,6 +166,15 @@ function formatLabel(value) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function normalizePhone(value) {
+  return (value || "").replace(/[^\d+]/g, "");
+}
+
+function getWhatsAppUrl(phone) {
+  const digits = normalizePhone(phone).replace(/^\+/, "");
+  return digits ? `https://wa.me/${digits}` : "#";
 }
 
 function formatPreferredSlot(dateValue, timeValue) {
@@ -432,6 +453,8 @@ function PublicRequestPage({ isAuthenticated }) {
     website: ""
   });
   const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
+  const showcaseImage =
+    "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80";
 
   useEffect(() => {
     let active = true;
@@ -568,10 +591,6 @@ function PublicRequestPage({ isAuthenticated }) {
                 <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
               </label>
               <label>
-                Email
-                <input name="email" type="email" value={form.email} onChange={updateField} placeholder="optional@email.com" />
-              </label>
-              <label>
                 Услуга
                 <select name="service_id" value={form.service_id} onChange={updateField} disabled={loadingServices}>
                   <option value="">Выберите услугу</option>
@@ -607,7 +626,6 @@ function PublicRequestPage({ isAuthenticated }) {
               </label>
               <label>
                 Адрес
-                <input name="address" value={form.address} onChange={updateField} placeholder="Ciocana, Chisinau" />
               </label>
             </div>
 
