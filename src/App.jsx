@@ -614,6 +614,9 @@ function PublicRequestPage({ isAuthenticated }) {
             <span>CRM-синхронизация</span>
             <span>Автономный follow-up</span>
           </div>
+          <div className="public-showcase-card">
+            <img src={showcaseImage} alt="Премиальный автомобиль после детейлинга" className="public-showcase-image" />
+          </div>
           {isAuthenticated ? <p className="public-auth-hint">Вы уже вошли в CRM и увидите новую заявку сразу после отправки.</p> : null}
         </div>
 
@@ -672,9 +675,6 @@ function PublicRequestPage({ isAuthenticated }) {
               <label>
                 Желаемое время
                 <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="После 18:00" />
-              </label>
-              <label>
-                Адрес
               </label>
             </div>
 
@@ -806,31 +806,31 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
       <section className="surface-card month-summary-card">
         <div className="section-title">
           <div>
-            <span className="eyebrow">Р¤РёРЅР°РЅСЃС‹</span>
-            <h2>РС‚РѕРіРё РјРµСЃСЏС†Р°</h2>
+            <span className="eyebrow">Финансы</span>
+            <h2>Итоги месяца</h2>
           </div>
         </div>
 
         <div className="month-summary-grid">
           <article className="month-summary-stat">
             <strong>{metrics.monthClosedLeads}</strong>
-            <span>Р—Р°РєСЂС‹С‚Рѕ Р·Р°СЏРІРѕРє</span>
+            <span>Закрыто заявок</span>
           </article>
           <article className="month-summary-stat">
             <strong>{formatCurrency(metrics.monthAverageTicket)}</strong>
-            <span>РЎСЂРµРґРЅРёР№ С‡РµРє</span>
+            <span>Средний чек</span>
           </article>
           <article className="month-summary-stat">
             <strong>{formatCurrency(metrics.monthRevenue)}</strong>
-            <span>РљР°СЃСЃР° Р·Р° РјРµСЃСЏС†</span>
+            <span>Касса за месяц</span>
           </article>
         </div>
 
         <div className="data-table compact-table">
           <div className="table-head month-revenue-head">
-            <span>РЈСЃР»СѓРіР°</span>
-            <span>Р—Р°СЏРІРѕРє</span>
-            <span>РЎСѓРјРјР°</span>
+            <span>Услуга</span>
+            <span>Заявок</span>
+            <span>Сумма</span>
           </div>
           {metrics.monthServiceRevenue.length ? (
             metrics.monthServiceRevenue.map((item) => (
@@ -841,7 +841,7 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
               </div>
             ))
           ) : (
-            <div className="table-empty-state">Р’ СЌС‚РѕРј РјРµСЃСЏС†Рµ РїРѕРєР° РЅРµС‚ Р·Р°РєСЂС‹С‚С‹С… Р·Р°СЏРІРѕРє РґР»СЏ РєР°СЃСЃС‹.</div>
+            <div className="table-empty-state">В этом месяце пока нет закрытых заявок для кассы.</div>
           )}
         </div>
       </section>

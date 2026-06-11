@@ -366,6 +366,23 @@ textarea {
   margin-top: 18px !important;
 }
 
+.public-showcase-card {
+  margin-top: 28px;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-soft);
+  background: var(--color-surface);
+}
+
+.public-showcase-image {
+  display: block;
+  width: 100%;
+  min-height: 320px;
+  max-height: 420px;
+  object-fit: cover;
+}
+
 .crm-shell {
   min-height: 100vh;
   background: var(--bg);
