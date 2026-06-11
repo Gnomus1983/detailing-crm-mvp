@@ -1635,105 +1635,6 @@ function ServicesPage({ services }) {
   );
 }
 
-function SettingsPage({ webhookEnabled, role }) {
-  const [activeSection, setActiveSection] = useState("profile");
-
-  function renderSection() {
-    if (activeSection === "profile") {
-      return (
-        <div className="settings-panel-stack">
-          <article className="settings-form-card">
-            <strong>Текущая роль</strong>
-            <p>{roleLabels[role] || roleLabels.manager}</p>
-          </article>
-          <article className="settings-form-card">
-            <strong>Рабочая зона</strong>
-            <p>CRM подключена к Supabase и использует браузерную аутентификацию для текущего профиля.</p>
-          </article>
-        </div>
-      );
-    }
-
-    if (activeSection === "team") {
-      return (
-        <div className="settings-panel-stack">
-          <article className="settings-form-card">
-            <strong>Команда</strong>
-            <p>Роли уже разведены на директора, менеджера и мастера. Следующий слой — отдельные реальные аккаунты на демо и продажу.</p>
-          </article>
-        </div>
-      );
-    }
-
-    if (activeSection === "billing") {
-      return (
-        <div className="settings-panel-stack">
-          <article className="settings-form-card">
-            <strong>Тариф</strong>
-            <p>Сейчас это MVP-слой. Подписочная SaaS-модель закреплена в roadmap и будет вынесена после стабилизации onboarding и UX.</p>
-          </article>
-        </div>
-      );
-    }
-
-    if (activeSection === "integrations") {
-      return (
-        <div className="settings-panel-stack">
-          <article className="settings-form-card">
-            <strong>Автоматизация</strong>
-            <p>
-              {webhookEnabled
-                ? "Внешний webhook автоматизации включён. CRM может отправлять события в дополнительный automation-layer."
-                : "Внешний webhook не обязателен. Основные уведомления и напоминания уже переведены на Supabase Edge Functions."}
-            </p>
-          </article>
-          <article className="settings-form-card">
-            <strong>Telegram</strong>
-            <p>Оповещения по новым заявкам, follow-up и daily digest уже работают через нативные Edge Functions проекта.</p>
-          </article>
-        </div>
-      );
-    }
-
-    return (
-      <div className="settings-panel-stack">
-        <article className="settings-form-card">
-          <strong>Безопасность</strong>
-          <p>RLS, rate limiting для public request и server-side Zod validation уже внедрены и проверены live.</p>
-        </article>
-      </div>
-    );
-  }
-
-  return (
-    <section className="page-stack">
-      <div className="page-header">
-        <div>
-          <h1>Настройки</h1>
-          <p>Блок конфигурации CRM, команды, интеграций и операционной безопасности.</p>
-        </div>
-      </div>
-
-      <div className="settings-layout">
-        <aside className="surface-card settings-nav-card">
-          {settingsSections.map((section) => (
-            <button
-              key={section}
-              type="button"
-              className={activeSection === section ? "settings-nav-item active" : "settings-nav-item"}
-              onClick={() => setActiveSection(section)}
-            >
-              {settingsSectionLabels[section]}
-            </button>
-          ))}
-        </aside>
-
-        <section className="surface-card settings-content-card">{renderSection()}</section>
-      </div>
-    </section>
-  );
-}
-
 function LiveSettingsPage({
   webhookEnabled,
   role,
@@ -1763,7 +1664,6 @@ function LiveSettingsPage({
   const [draftServices, setDraftServices] = useState({});
   const [newService, setNewService] = useState({ name: "", base_price: "", duration_minutes: "", is_active: true });
   const [passwordForm, setPasswordForm] = useState({ next: "", confirm: "" });
-
 
   useEffect(() => {
     setProfileForm({
@@ -1843,14 +1743,14 @@ function LiveSettingsPage({
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>РџСЂРѕС„РёР»СЊ</strong>
+            <strong>{"Профиль"}</strong>
             <form className="settings-edit-form" onSubmit={handleProfileSubmit}>
               <label>
-                РРјСЏ РІ CRM
+                {"Имя в CRM"}
                 <input
                   value={profileForm.full_name}
                   onChange={(event) => setProfileForm((current) => ({ ...current, full_name: event.target.value }))}
-                  placeholder="РРјСЏ РІР»Р°РґРµР»СЊС†Р° РёР»Рё РјРµРЅРµРґР¶РµСЂР°"
+                  placeholder={"Имя владельца или менеджера"}
                 />
               </label>
               <label>
@@ -1858,13 +1758,13 @@ function LiveSettingsPage({
                 <input
                   value={profileForm.telegram_chat_id}
                   onChange={(event) => setProfileForm((current) => ({ ...current, telegram_chat_id: event.target.value }))}
-                  placeholder="Р”Р»СЏ Р»РёС‡РЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№"
+                  placeholder={"Для личных уведомлений"}
                 />
               </label>
               <div className="settings-action-row">
-                <span className="hint-text">Р¢РµРєСѓС‰Р°СЏ СЂРѕР»СЊ: {roleLabels[role] || roleLabels.manager}</span>
+                <span className="hint-text">{"Текущая роль:"} {roleLabels[role] || roleLabels.manager}</span>
                 <button type="submit" className="button button-primary" disabled={profileSaving}>
-                  {profileSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ"}
+                  {profileSaving ? "Сохраняем..." : "Сохранить профиль"}
                 </button>
               </div>
             </form>
@@ -1879,8 +1779,8 @@ function LiveSettingsPage({
           <article className="settings-form-card">
             <div className="settings-toolbar-card">
               <div>
-                <strong>РљРѕРјР°РЅРґР°</strong>
-                <p>РњРµРЅСЏР№С‚Рµ РёРјСЏ, СЂРѕР»СЊ Рё Telegram РґР»СЏ owner, manager Рё detailer.</p>
+                <strong>{"Команда"}</strong>
+                <p>{"Меняйте имя, роль и Telegram для owner, manager и detailer."}</p>
               </div>
             </div>
             <div className="service-grid settings-service-grid">
@@ -1894,12 +1794,12 @@ function LiveSettingsPage({
                 return (
                   <article key={member.id} className="service-card">
                     <div className="service-card-head">
-                      <strong>{member.full_name || member.email || "РЈС‡Р°СЃС‚РЅРёРє"}</strong>
-                      <span>{member.email || "Р‘РµР· email"}</span>
+                      <strong>{member.full_name || member.email || "Участник"}</strong>
+                      <span>{member.email || "Без email"}</span>
                     </div>
                     <div className="settings-edit-form">
                       <label>
-                        РРјСЏ
+                        {"Имя"}
                         <input
                           value={draft.full_name}
                           onChange={(event) =>
@@ -1911,7 +1811,7 @@ function LiveSettingsPage({
                         />
                       </label>
                       <label>
-                        Р РѕР»СЊ
+                        {"Роль"}
                         <select
                           value={draft.role}
                           onChange={(event) =>
@@ -1941,22 +1841,12 @@ function LiveSettingsPage({
                         />
                       </label>
                       <div className="settings-action-row">
-                        <button
-                          type="button"
-                          className="button button-primary"
-                          disabled={teamSaving}
-                          onClick={() => onUpdateTeamMember(member.id, draft)}
-                        >
-                          {teamSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ"}
+                        <button type="button" className="button button-primary" disabled={teamSaving} onClick={() => onUpdateTeamMember(member.id, draft)}>
+                          {teamSaving ? "Сохраняем..." : "Сохранить"}
                         </button>
                         {profile?.id !== member.id ? (
-                          <button
-                            type="button"
-                            className="button button-outline"
-                            disabled={teamSaving}
-                            onClick={() => onDeleteTeamMember(member.id)}
-                          >
-                            РЈРґР°Р»РёС‚СЊ
+                          <button type="button" className="button button-outline" disabled={teamSaving} onClick={() => onDeleteTeamMember(member.id)}>
+                            {"Удалить"}
                           </button>
                         ) : null}
                       </div>
@@ -1968,37 +1858,23 @@ function LiveSettingsPage({
           </article>
 
           <article className="settings-form-card">
-            <strong>Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°</strong>
+            <strong>{"Добавить участника"}</strong>
             <form className="settings-edit-form" onSubmit={handleCreateTeamMember}>
               <label>
-                РРјСЏ
-                <input
-                  value={newTeamMember.full_name}
-                  onChange={(event) => setNewTeamMember((current) => ({ ...current, full_name: event.target.value }))}
-                />
+                {"Имя"}
+                <input value={newTeamMember.full_name} onChange={(event) => setNewTeamMember((current) => ({ ...current, full_name: event.target.value }))} />
               </label>
               <label>
                 Email
-                <input
-                  type="email"
-                  value={newTeamMember.email}
-                  onChange={(event) => setNewTeamMember((current) => ({ ...current, email: event.target.value }))}
-                />
+                <input type="email" value={newTeamMember.email} onChange={(event) => setNewTeamMember((current) => ({ ...current, email: event.target.value }))} />
               </label>
               <label>
-                Р’СЂРµРјРµРЅРЅС‹Р№ РїР°СЂРѕР»СЊ
-                <input
-                  type="password"
-                  value={newTeamMember.password}
-                  onChange={(event) => setNewTeamMember((current) => ({ ...current, password: event.target.value }))}
-                />
+                {"Временный пароль"}
+                <input type="password" value={newTeamMember.password} onChange={(event) => setNewTeamMember((current) => ({ ...current, password: event.target.value }))} />
               </label>
               <label>
-                Р РѕР»СЊ
-                <select
-                  value={newTeamMember.role}
-                  onChange={(event) => setNewTeamMember((current) => ({ ...current, role: event.target.value }))}
-                >
+                {"Роль"}
+                <select value={newTeamMember.role} onChange={(event) => setNewTeamMember((current) => ({ ...current, role: event.target.value }))}>
                   {roleOptions.map((option) => (
                     <option key={option} value={option}>
                       {roleLabels[option]}
@@ -2008,13 +1884,10 @@ function LiveSettingsPage({
               </label>
               <label>
                 Telegram chat id
-                <input
-                  value={newTeamMember.telegram_chat_id}
-                  onChange={(event) => setNewTeamMember((current) => ({ ...current, telegram_chat_id: event.target.value }))}
-                />
+                <input value={newTeamMember.telegram_chat_id} onChange={(event) => setNewTeamMember((current) => ({ ...current, telegram_chat_id: event.target.value }))} />
               </label>
               <button type="submit" className="button button-primary" disabled={creatingTeamMember}>
-                {creatingTeamMember ? "РЎРѕР·РґР°С‘Рј..." : "РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚"}
+                {creatingTeamMember ? "Создаём..." : "Создать аккаунт"}
               </button>
             </form>
           </article>
@@ -2028,17 +1901,17 @@ function LiveSettingsPage({
           <article className="settings-form-card">
             <div className="settings-toolbar-card">
               <div>
-                <strong>Р”РµРјРѕ-РїСЂР°Р№СЃ</strong>
-                <p>РџРѕРґС‚СЏРіРёРІР°РµРј СЂРµР°Р»РёСЃС‚РёС‡РЅС‹Рµ С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё, С‡С‚РѕР±С‹ РїРѕРєР°Р·Р°С‚СЊ РєР°СЃСЃСѓ Рё СЃСЂРµРґРЅРёР№ С‡РµРє Р·Р° РјРµСЃСЏС†.</p>
+                <strong>{"Демо-прайс"}</strong>
+                <p>{"Подтягиваем реалистичные цены и время на услуги, чтобы показать кассу и средний чек за месяц."}</p>
               </div>
               <button type="button" className="button button-primary" disabled={applyingDemoPricing} onClick={onApplyDemoPricing}>
-                {applyingDemoPricing ? "РћР±РЅРѕРІР»СЏРµРј..." : "Р—Р°РіСЂСѓР·РёС‚СЊ РґРµРјРѕ-С†РµРЅС‹"}
+                {applyingDemoPricing ? "Обновляем..." : "Загрузить демо-цены"}
               </button>
             </div>
           </article>
 
           <article className="settings-form-card">
-            <strong>РЈСЃР»СѓРіРё</strong>
+            <strong>{"Услуги"}</strong>
             <div className="service-grid settings-service-grid">
               {(services || []).map((service) => {
                 const draft = draftServices[service.id] || {
@@ -2052,65 +1925,23 @@ function LiveSettingsPage({
                   <article key={service.id} className="service-card">
                     <div className="settings-edit-form">
                       <label>
-                        РќР°Р·РІР°РЅРёРµ
-                        <input
-                          value={draft.name}
-                          onChange={(event) =>
-                            setDraftServices((current) => ({
-                              ...current,
-                              [service.id]: { ...draft, name: event.target.value }
-                            }))
-                          }
-                        />
+                        {"Название"}
+                        <input value={draft.name} onChange={(event) => setDraftServices((current) => ({ ...current, [service.id]: { ...draft, name: event.target.value } }))} />
                       </label>
                       <label>
-                        Р¦РµРЅР° (MDL)
-                        <input
-                          type="number"
-                          min="0"
-                          value={draft.base_price}
-                          onChange={(event) =>
-                            setDraftServices((current) => ({
-                              ...current,
-                              [service.id]: { ...draft, base_price: event.target.value }
-                            }))
-                          }
-                        />
+                        {"Цена (MDL)"}
+                        <input type="number" min="0" value={draft.base_price} onChange={(event) => setDraftServices((current) => ({ ...current, [service.id]: { ...draft, base_price: event.target.value } }))} />
                       </label>
                       <label>
-                        Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
-                        <input
-                          type="number"
-                          min="0"
-                          value={draft.duration_minutes}
-                          onChange={(event) =>
-                            setDraftServices((current) => ({
-                              ...current,
-                              [service.id]: { ...draft, duration_minutes: event.target.value }
-                            }))
-                          }
-                        />
+                        {"Длительность (мин)"}
+                        <input type="number" min="0" value={draft.duration_minutes} onChange={(event) => setDraftServices((current) => ({ ...current, [service.id]: { ...draft, duration_minutes: event.target.value } }))} />
                       </label>
                       <label className="settings-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={draft.is_active}
-                          onChange={(event) =>
-                            setDraftServices((current) => ({
-                              ...current,
-                              [service.id]: { ...draft, is_active: event.target.checked }
-                            }))
-                          }
-                        />
-                        <span>РђРєС‚РёРІРЅР°СЏ СѓСЃР»СѓРіР°</span>
+                        <input type="checkbox" checked={draft.is_active} onChange={(event) => setDraftServices((current) => ({ ...current, [service.id]: { ...draft, is_active: event.target.checked } }))} />
+                        <span>{"Активная услуга"}</span>
                       </label>
-                      <button
-                        type="button"
-                        className="button button-primary"
-                        disabled={serviceSavingId === service.id}
-                        onClick={() => onUpdateService(service.id, draft)}
-                      >
-                        {serviceSavingId === service.id ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ СѓСЃР»СѓРіСѓ"}
+                      <button type="button" className="button button-primary" disabled={serviceSavingId === service.id} onClick={() => onUpdateService(service.id, draft)}>
+                        {serviceSavingId === service.id ? "Сохраняем..." : "Сохранить услугу"}
                       </button>
                     </div>
                   </article>
@@ -2120,40 +1951,26 @@ function LiveSettingsPage({
           </article>
 
           <article className="settings-form-card">
-            <strong>РќРѕРІР°СЏ СѓСЃР»СѓРіР°</strong>
+            <strong>{"Новая услуга"}</strong>
             <form className="settings-edit-form" onSubmit={handleCreateService}>
               <label>
-                РќР°Р·РІР°РЅРёРµ
+                {"Название"}
                 <input value={newService.name} onChange={(event) => setNewService((current) => ({ ...current, name: event.target.value }))} />
               </label>
               <label>
-                Р¦РµРЅР° (MDL)
-                <input
-                  type="number"
-                  min="0"
-                  value={newService.base_price}
-                  onChange={(event) => setNewService((current) => ({ ...current, base_price: event.target.value }))}
-                />
+                {"Цена (MDL)"}
+                <input type="number" min="0" value={newService.base_price} onChange={(event) => setNewService((current) => ({ ...current, base_price: event.target.value }))} />
               </label>
               <label>
-                Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
-                <input
-                  type="number"
-                  min="0"
-                  value={newService.duration_minutes}
-                  onChange={(event) => setNewService((current) => ({ ...current, duration_minutes: event.target.value }))}
-                />
+                {"Длительность (мин)"}
+                <input type="number" min="0" value={newService.duration_minutes} onChange={(event) => setNewService((current) => ({ ...current, duration_minutes: event.target.value }))} />
               </label>
               <label className="settings-checkbox">
-                <input
-                  type="checkbox"
-                  checked={newService.is_active}
-                  onChange={(event) => setNewService((current) => ({ ...current, is_active: event.target.checked }))}
-                />
-                <span>РЎСЂР°Р·Сѓ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ</span>
+                <input type="checkbox" checked={newService.is_active} onChange={(event) => setNewService((current) => ({ ...current, is_active: event.target.checked }))} />
+                <span>{"Сразу активировать"}</span>
               </label>
               <button type="submit" className="button button-primary" disabled={creatingService}>
-                {creatingService ? "РЎРѕР·РґР°С‘Рј..." : "Р”РѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ"}
+                {creatingService ? "Создаём..." : "Добавить услугу"}
               </button>
             </form>
           </article>
@@ -2168,13 +1985,13 @@ function LiveSettingsPage({
             <strong>Webhook automation</strong>
             <p>
               {webhookEnabled
-                ? "Р’РЅРµС€РЅРёР№ webhook РІРєР»СЋС‡С‘РЅ. CRM РѕС‚РїСЂР°РІР»СЏРµС‚ СЃРѕР±С‹С‚РёСЏ РїРѕ Р·Р°СЏРІРєР°Рј РІ automation-layer."
-                : "Webhook РЅРµ РЅР°СЃС‚СЂРѕРµРЅ. РћСЃРЅРѕРІРЅРѕР№ follow-up Рё Telegram live-РѕРїРѕРІРµС‰РµРЅРёСЏ РѕСЃС‚Р°СЋС‚СЃСЏ РЅР° Supabase Edge Functions."}
+                ? "Внешний webhook включён. CRM отправляет события по заявкам в automation-layer."
+                : "Webhook не настроен. Основной follow-up и Telegram live-оповещения остаются на Supabase Edge Functions."}
             </p>
           </article>
           <article className="settings-form-card">
             <strong>Telegram</strong>
-            <p>Chat id РјРµРЅРµРґР¶РµСЂРѕРІ: {managerProfiles.length ? managerProfiles.map((member) => member.telegram_chat_id || "РЅРµ СѓРєР°Р·Р°РЅ").join(", ") : "РїРѕРєР° РЅРµС‚"}.</p>
+            <p>{"Chat id менеджеров:"} {managerProfiles.length ? managerProfiles.map((member) => member.telegram_chat_id || "не указан").join(", ") : "пока нет"}.</p>
           </article>
         </div>
       );
@@ -2183,30 +2000,18 @@ function LiveSettingsPage({
     return (
       <div className="settings-panel-stack">
         <article className="settings-form-card">
-          <strong>РЎРјРµРЅР° РїР°СЂРѕР»СЏ</strong>
+          <strong>{"Смена пароля"}</strong>
           <form className="settings-edit-form" onSubmit={handlePasswordSubmit}>
             <label>
-              РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ
-              <input
-                type="password"
-                value={passwordForm.next}
-                onChange={(event) => setPasswordForm((current) => ({ ...current, next: event.target.value }))}
-              />
+              {"Новый пароль"}
+              <input type="password" value={passwordForm.next} onChange={(event) => setPasswordForm((current) => ({ ...current, next: event.target.value }))} />
             </label>
             <label>
-              РџРѕРІС‚РѕСЂРёС‚Рµ РїР°СЂРѕР»СЊ
-              <input
-                type="password"
-                value={passwordForm.confirm}
-                onChange={(event) => setPasswordForm((current) => ({ ...current, confirm: event.target.value }))}
-              />
+              {"Повторите пароль"}
+              <input type="password" value={passwordForm.confirm} onChange={(event) => setPasswordForm((current) => ({ ...current, confirm: event.target.value }))} />
             </label>
-            <button
-              type="submit"
-              className="button button-primary"
-              disabled={passwordSaving || !passwordForm.next || passwordForm.next !== passwordForm.confirm}
-            >
-              {passwordSaving ? "РћР±РЅРѕРІР»СЏРµРј..." : "РЎРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ"}
+            <button type="submit" className="button button-primary" disabled={passwordSaving || !passwordForm.next || passwordForm.next !== passwordForm.confirm}>
+              {passwordSaving ? "Обновляем..." : "Сменить пароль"}
             </button>
           </form>
         </article>
@@ -2218,20 +2023,15 @@ function LiveSettingsPage({
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>РќР°СЃС‚СЂРѕР№РєРё</h1>
-          <p>Р‘Р»РѕРє РєРѕРЅС„РёРіСѓСЂР°С†РёРё CRM, РєРѕРјР°РЅРґС‹, РёРЅС‚РµРіСЂР°С†РёР№ Рё РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё.</p>
+          <h1>{"Настройки"}</h1>
+          <p>{"Блок конфигурации CRM, команды, интеграций и операционной безопасности."}</p>
         </div>
       </div>
 
       <div className="settings-layout">
         <aside className="surface-card settings-nav-card">
           {settingsSections.map((section) => (
-            <button
-              key={section}
-              type="button"
-              className={activeSection === section ? "settings-nav-item active" : "settings-nav-item"}
-              onClick={() => setActiveSection(section)}
-            >
+            <button key={section} type="button" className={activeSection === section ? "settings-nav-item active" : "settings-nav-item"} onClick={() => setActiveSection(section)}>
               {settingsSectionLabels[section]}
             </button>
           ))}
@@ -2791,7 +2591,7 @@ function ProtectedApp({ session, onSignOut }) {
     }
 
     window.location.href = `tel:${normalized}`;
-    setSaveMessage(`РќРѕРјРµСЂ ${normalized} РїРµСЂРµРґР°РЅ РІ СЃРёСЃС‚РµРјРЅС‹Р№ РЅР°Р±РѕСЂ.`);
+    setSaveMessage(`\u041d\u043e\u043c\u0435\u0440 ${normalized} \u043f\u0435\u0440\u0435\u0434\u0430\u043d \u0432 \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0439 \u043d\u0430\u0431\u043e\u0440.`);
   }
 
   useEffect(() => {
