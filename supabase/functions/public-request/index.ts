@@ -95,135 +95,144 @@ async function triggerLeadAlert(
 }
 
 Deno.serve(async (request) => {
-  if (request.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
-  }
+  try {
+    if (request.method === "OPTIONS") {
+      return new Response("ok", { headers: corsHeaders });
+    }
 
-  if (request.method !== "POST") {
-    return jsonResponse({ error: "Metoda nu este permisa" }, 405);
-  }
+    if (request.method !== "POST") {
+      return jsonResponse({ error: "Metoda nu este permisa" }, 405);
+    }
 
-  const body = await request.json();
-  const parsed = publicLeadSchema.safeParse(body);
+    const body = await request.json();
+    const parsed = publicLeadSchema.safeParse(body);
 
-  if (!parsed.success) {
-    return jsonResponse(
-      {
-        error: "Datele cererii nu sunt valide.",
-        details: parsed.error.flatten()
-      },
-      400
-    );
-  }
+    if (!parsed.success) {
+      return jsonResponse(
+        {
+          error: "Datele cererii nu sunt valide.",
+          details: parsed.error.flatten()
+        },
+        400
+      );
+    }
 
-  const payload = parsed.data;
-  const ip = getClientIp(request);
-  const phone = normalizeText(payload.phone);
+    const payload = parsed.data;
+    const ip = getClientIp(request);
+    const phone = normalizeText(payload.phone);
 
-  if (!ip) {
-    return jsonResponse({ error: "Nu am putut valida sursa cererii." }, 400);
-  }
+    if (!ip) {
+      return jsonResponse({ error: "Nu am putut valida sursa cererii." }, 400);
+    }
 
-  if (!normalizeText(payload.client_name) || !phone) {
-    return jsonResponse({ error: "Numele si telefonul sunt obligatorii." }, 400);
-  }
+    if (!normalizeText(payload.client_name) || !phone) {
+      return jsonResponse({ error: "Numele si telefonul sunt obligatorii." }, 400);
+    }
 
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const internalAlertToken = Deno.env.get("ALERT_INTERNAL_TOKEN") || null;
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const internalAlertToken = Deno.env.get("ALERT_INTERNAL_TOKEN") || null;
+    const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  const identifierHash = await hashIdentifier(`public_request:${ip}`);
-  const oneHourAgoIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const identifierHash = await hashIdentifier(`public_request:${ip}`);
+    const oneHourAgoIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
-  const { count, error: rateLimitError } = await supabase
-    .from("rate_limit_events")
-    .select("*", { count: "exact", head: true })
-    .eq("action_key", "public_request")
-    .eq("identifier_hash", identifierHash)
-    .gte("created_at", oneHourAgoIso);
+    const { count, error: rateLimitError } = await supabase
+      .from("rate_limit_events")
+      .select("*", { count: "exact", head: true })
+      .eq("action_key", "public_request")
+      .eq("identifier_hash", identifierHash)
+      .gte("created_at", oneHourAgoIso);
 
-  if (rateLimitError) {
-    return jsonResponse({ error: rateLimitError.message }, 500);
-  }
+    if (rateLimitError) {
+      return jsonResponse({ error: rateLimitError.message }, 500);
+    }
 
-  if ((count || 0) >= 3) {
-    return jsonResponse(
-      {
-        error: "Ai trimis deja prea multe cereri in ultima ora. Incearca din nou mai tarziu."
-      },
-      429
-    );
-  }
+    if ((count || 0) >= 3) {
+      return jsonResponse(
+        {
+          error: "Ai trimis deja prea multe cereri in ultima ora. Incearca din nou mai tarziu."
+        },
+        429
+      );
+    }
 
-  const { error: logError } = await supabase.from("rate_limit_events").insert({
-    action_key: "public_request",
-    identifier_hash: identifierHash
-  });
+    const { error: logError } = await supabase.from("rate_limit_events").insert({
+      action_key: "public_request",
+      identifier_hash: identifierHash
+    });
 
-  if (logError) {
-    return jsonResponse({ error: logError.message }, 500);
-  }
+    if (logError) {
+      return jsonResponse({ error: logError.message }, 500);
+    }
 
-  const { data, error } = await supabase.rpc("submit_public_lead", {
-    p_client_name: normalizeText(payload.client_name),
-    p_phone: phone,
-    p_email: normalizeText(payload.email),
-    p_service_id: emptyToNull(payload.service_id) || null,
-    p_car_make: normalizeText(payload.car_make),
-    p_car_model: normalizeText(payload.car_model),
-    p_car_year: typeof payload.car_year === "number" ? payload.car_year : null,
-    p_car_plate: normalizeText(payload.car_plate),
-    p_source: normalizeText(payload.source) || "landing",
-    p_address: normalizeText(payload.address),
-    p_comment: normalizeText(payload.comment),
-    p_preferred_date: emptyToNull(payload.preferred_date) || null,
-    p_preferred_time: normalizeText(payload.preferred_time),
-    p_estimated_price: typeof payload.estimated_price === "number" ? payload.estimated_price : null,
-    p_follow_up_at: typeof payload.follow_up_at === "string" && payload.follow_up_at ? new Date(payload.follow_up_at).toISOString() : null,
-    p_website: normalizeText(payload.website)
-  });
+    const { data, error } = await supabase.rpc("submit_public_lead", {
+      p_client_name: normalizeText(payload.client_name),
+      p_phone: phone,
+      p_email: normalizeText(payload.email),
+      p_service_id: emptyToNull(payload.service_id) || null,
+      p_car_make: normalizeText(payload.car_make),
+      p_car_model: normalizeText(payload.car_model),
+      p_car_year: typeof payload.car_year === "number" ? payload.car_year : null,
+      p_car_plate: normalizeText(payload.car_plate),
+      p_source: normalizeText(payload.source) || "landing",
+      p_address: normalizeText(payload.address),
+      p_comment: normalizeText(payload.comment),
+      p_preferred_date: emptyToNull(payload.preferred_date) || null,
+      p_preferred_time: normalizeText(payload.preferred_time),
+      p_estimated_price: typeof payload.estimated_price === "number" ? payload.estimated_price : null,
+      p_follow_up_at:
+        typeof payload.follow_up_at === "string" && payload.follow_up_at
+          ? new Date(payload.follow_up_at).toISOString()
+          : null,
+      p_website: normalizeText(payload.website)
+    });
 
-  if (error) {
-    return jsonResponse({ error: error.message }, 400);
-  }
+    if (error) {
+      return jsonResponse({ error: error.message }, 400);
+    }
 
-  let alertStatus: "sent" | "skipped" | "failed" = "skipped";
+    let alertStatus: "sent" | "skipped" | "failed" = "skipped";
 
-  if (data?.lead_id) {
-    const { data: alertLead, error: alertLeadError } = await supabase
-      .from("leads")
-      .select(
-        "id, source, preferred_date, preferred_time, comment, estimated_price, follow_up_at, clients(name, phone, car_make, car_model, car_year), services(name)"
-      )
-      .eq("id", data.lead_id)
-      .single();
+    if (data?.lead_id) {
+      const { data: alertLead, error: alertLeadError } = await supabase
+        .from("leads")
+        .select(
+          "id, source, preferred_date, preferred_time, comment, estimated_price, follow_up_at, clients(name, phone, car_make, car_model, car_year), services(name)"
+        )
+        .eq("id", data.lead_id)
+        .single();
 
-    if (!alertLeadError && alertLead) {
-      try {
-        await triggerLeadAlert(supabaseUrl, internalAlertToken, {
-          event: "lead_created",
-          public_entry: true,
-          lead: alertLead,
-          client: {
-            name: alertLead.clients?.name || null,
-            phone: alertLead.clients?.phone || null
-          },
-          intake: {
-            client_name: normalizeText(payload.client_name),
-            phone,
-            source: normalizeText(payload.source) || "landing",
-            service_id: emptyToNull(payload.service_id) || null
-          },
-          sent_at: new Date().toISOString()
-        });
-        alertStatus = "sent";
-      } catch (alertError) {
-        console.error("public-request lead-alert failed", alertError);
-        alertStatus = "failed";
+      if (!alertLeadError && alertLead) {
+        try {
+          await triggerLeadAlert(supabaseUrl, internalAlertToken, {
+            event: "lead_created",
+            public_entry: true,
+            lead: alertLead,
+            client: {
+              name: alertLead.clients?.name || null,
+              phone: alertLead.clients?.phone || null
+            },
+            intake: {
+              client_name: normalizeText(payload.client_name),
+              phone,
+              source: normalizeText(payload.source) || "landing",
+              service_id: emptyToNull(payload.service_id) || null
+            },
+            sent_at: new Date().toISOString()
+          });
+          alertStatus = "sent";
+        } catch (alertError) {
+          console.error("public-request lead-alert failed", alertError);
+          alertStatus = "failed";
+        }
       }
     }
-  }
 
-  return jsonResponse({ ok: true, result: data, alert_status: alertStatus });
+    return jsonResponse({ ok: true, result: data, alert_status: alertStatus });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unexpected public-request failure";
+    console.error("public-request fatal", error);
+    return jsonResponse({ error: message }, 500);
+  }
 });

@@ -1,7 +1,7 @@
 # FIRST CLIENT READY CHECK
 
-Дата live-проверки: 2026-06-11
-Проект: `detailing-crm-mvp`
+Дата live-проверки: 2026-06-11  
+Проект: `detailing-crm-mvp`  
 Supabase project ref: `knegynsaxsufwfbgqmoq`
 
 ## Что работает
@@ -16,17 +16,18 @@ Supabase project ref: `knegynsaxsufwfbgqmoq`
 
 - `/request` открывается
 - валидация пустой формы работает
-- public request проходит успешно после очистки `rate_limit_events`
+- public request проходит успешно
 - новая заявка создаётся в CRM
 - duplicate guard по телефону работает
 - anti-spam rate limit работает
+- после live redeploy `public-request` сам вызывает `lead-alert`
 
 ### Роли
 
 - `owner` login проверен
 - `manager` login проверен
 - `detailer` login проверен
-- для `detailer` подтверждена видимость только назначенной заявки
+- `detailer` видит только назначенную заявку
 - `owner` видит заявку и её историю
 
 Проверенные demo-аккаунты:
@@ -57,43 +58,50 @@ Supabase project ref: `knegynsaxsufwfbgqmoq`
 
 ### Telegram automation
 
-- `lead-alert` живой, отвечает `200`, сообщение в Telegram отправлено
-- `follow-up-reminder` живой, отвечает `200`, reminder отправлен
-- в `automation_runs` есть `started/success` записи для:
+- `lead-alert` живой, отвечает `200`
+- `follow-up-reminder` живой, отвечает `200`
+- в `automation_runs` есть `started/success` для:
   - `lead_alert`
   - `follow_up_reminder`
 - в `lead_events` есть `reminder_sent`
 
+Дополнительно после финального redeploy проверен новый публичный lead:
+
+- lead id: `3a45dbe6-3d3d-49e0-8af9-688cd1ccbfe4`
+- client: `Auto Alert Client`
+- ответ `public-request`: `alert_status = sent`
+- в `automation_runs` автоматически появились `lead_alert started/success`
+- в `lead_events` автоматически появилась запись `reminder_sent`
+
 ## Что пришлось чинить
 
 - очищена блокировка public form в `rate_limit_events`
-- удалён demo-мусор `Rate Limit Smoke` / `Public Demo Client` / rate-limit хвосты
+- удалён demo-мусор `Rate Limit Smoke` / `Public Demo Client` / хвосты rate limit
 - починен smoke suite:
   - стабильное чтение `.env`
   - rate-limit smoke переведён на прямой `fetch`
 - найдена и исправлена RLS-рекурсия в policy `Owners can manage all profiles`
 - добавлена миграция:
   - `supabase/migrations/20260611_profiles_owner_policy_fix.sql`
-- в repo добавлен fix, чтобы `public-request` после деплоя мог сам вызывать `lead-alert`
+- live redeploy `public-request` обновлён до версии, которая автоматически триггерит `lead-alert`
+- добавлен защитный `try/catch` в `public-request`, чтобы не оставлять немые `500`
 
-## Что ещё остаётся
+## Что ещё остаётся необязательным
 
-### Обязательное перед первым реальным клиентом
-
-- live Supabase function `public-request` ещё не задеплоена с новым auto-call в `lead-alert`
-- поэтому сейчас цепочка `public form -> Telegram lead_created` подтверждена только ручным invoke `lead-alert`, а не автоматическим срабатыванием из `public-request`
-
-### Необязательное
-
-- убрать дубли старых услуг в `services`, если хотите довести demo-картину до идеала
-- позже можно сделать scheduler/cron для `follow-up-reminder`, если хотите полностью автономный daily run без ручного invoke
+- убрать дубли старых услуг в `services`, если захотите довести demo-картину до идеала
+- позже можно вынести follow-up reminder на полностью автономный cron/scheduler, если нужен ежедневный run без ручного invoke
+- можно расширить настройки: управление участниками команды, услугами и прайсами прямо из UI
 
 ## Итог
 
-ГОТОВ К ПЕРВОМУ КЛИЕНТУ: почти
+ГОТОВ К ПЕРВОМУ КЛИЕНТУ: да
 
-Главный остаток:
+Главный результат:
 
-- нужен redeploy live-функции `public-request`, чтобы `lead_created` Telegram уходил автоматически сразу после публичной заявки
+- публичная форма работает
+- CRM flow работает
+- роли работают
+- Telegram automation работает
+- smoke и build зелёные
 
-После этого проект можно считать готовым к первому клиенту без ручных обходных шагов.
+Проект можно показывать клиенту и проводить первый живой demo-flow без ручных обходных шагов.
