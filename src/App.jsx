@@ -307,6 +307,7 @@ function LoginPage({ onAuthenticated }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -349,6 +350,33 @@ function LoginPage({ onAuthenticated }) {
       setError(submitError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕР№С‚Рё РІ СЃРёСЃС‚РµРјСѓ.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleAuth() {
+    setGoogleLoading(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const redirectTo = `${window.location.origin}/`;
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account"
+          }
+        }
+      });
+
+      if (oauthError) {
+        throw oauthError;
+      }
+    } catch (submitError) {
+      setError(submitError.message || "Не удалось продолжить через Google.");
+      setGoogleLoading(false);
     }
   }
 
@@ -416,8 +444,17 @@ function LoginPage({ onAuthenticated }) {
             <span>РёР»Рё</span>
           </div>
 
-          <button type="button" className="button button-outline button-full" disabled>
-            РџСЂРѕРґРѕР»Р¶РёС‚СЊ С‡РµСЂРµР· Google
+          <button
+            type="button"
+            className="button button-outline button-full"
+            onClick={handleGoogleAuth}
+            disabled={loading || googleLoading}
+          >
+            {googleLoading
+              ? "Переходим в Google..."
+              : mode === "sign-up"
+                ? "Зарегистрироваться через Google"
+                : "Войти через Google"}
           </button>
 
           {message ? <p className="status-note success">{message}</p> : null}
