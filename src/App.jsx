@@ -1,4 +1,4 @@
-﻿import { createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import {
@@ -15,17 +15,17 @@ import detailLogo from "./detailLogo";
 import { supabase } from "./supabase";
 
 const navItems = [
-  { to: "/dashboard", label: "РџР°РЅРµР»СЊ" },
-  { to: "/leads", label: "Р—Р°СЏРІРєРё" },
-  { to: "/clients", label: "РљР»РёРµРЅС‚С‹" },
-  { to: "/tasks", label: "Р—Р°РґР°С‡Рё" },
-  { to: "/settings", label: "РќР°СЃС‚СЂРѕР№РєРё" }
+  { to: "/dashboard", label: "Панель" },
+  { to: "/leads", label: "Заявки" },
+  { to: "/clients", label: "Клиенты" },
+  { to: "/tasks", label: "Задачи" },
+  { to: "/settings", label: "Настройки" }
 ];
 
 const roleLabels = {
-  owner: "Р”РёСЂРµРєС‚РѕСЂ",
-  manager: "РњРµРЅРµРґР¶РµСЂ",
-  detailer: "РњР°СЃС‚РµСЂ"
+  owner: "Директор",
+  manager: "Менеджер",
+  detailer: "Мастер"
 };
 
 const roleOptions = ["owner", "manager", "detailer"];
@@ -65,49 +65,49 @@ const demoServicePresets = [
 ];
 
 const statusLabels = {
-  new: "РќРѕРІР°СЏ",
-  contacted: "РЎРІСЏР·Р°Р»РёСЃСЊ",
-  quoted: "РџСЂРµРґР»РѕР¶РµРЅРёРµ",
-  scheduled: "Р—Р°РїР»Р°РЅРёСЂРѕРІР°РЅРѕ",
-  in_progress: "Р’ СЂР°Р±РѕС‚Рµ",
-  done: "Р“РѕС‚РѕРІРѕ",
-  lost: "РћС‚РјРµРЅРµРЅРѕ"
+  new: "Новая",
+  contacted: "Связались",
+  quoted: "Предложение",
+  scheduled: "Запланировано",
+  in_progress: "В работе",
+  done: "Готово",
+  lost: "Отменено"
 };
 
 const statusGroupLabels = {
-  new: "РќРѕРІС‹Рµ",
-  in_progress: "Р’ СЂР°Р±РѕС‚Рµ",
-  done: "Р“РѕС‚РѕРІРѕ",
-  lost: "РћС‚РјРµРЅРµРЅРѕ"
+  new: "Новые",
+  in_progress: "В работе",
+  done: "Готово",
+  lost: "Отменено"
 };
 
 const eventLabels = {
-  created: "Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР°",
-  status_changed: "РЎС‚Р°С‚СѓСЃ РёР·РјРµРЅС‘РЅ",
-  note_added: "Р”РѕР±Р°РІР»РµРЅР° Р·Р°РјРµС‚РєР°",
-  follow_up_set: "Follow-up РѕР±РЅРѕРІР»С‘РЅ",
-  assigned: "РќР°Р·РЅР°С‡РµРЅРѕ",
-  price_updated: "РћР±РЅРѕРІР»РµРЅР° СЃСѓРјРјР°",
-  reminder_sent: "РћС‚РїСЂР°РІР»РµРЅРѕ РЅР°РїРѕРјРёРЅР°РЅРёРµ"
+  created: "Заявка создана",
+  status_changed: "Статус изменён",
+  note_added: "Добавлена заметка",
+  follow_up_set: "Follow-up обновлён",
+  assigned: "Назначено",
+  price_updated: "Обновлена сумма",
+  reminder_sent: "Отправлено напоминание"
 };
 
 const sourceLabels = {
-  manual: "Р’СЂСѓС‡РЅСѓСЋ",
-  landing: "Р›РµРЅРґРёРЅРі",
+  manual: "Вручную",
+  landing: "Лендинг",
   instagram: "Instagram",
   telegram: "Telegram",
   whatsapp: "WhatsApp",
-  phone: "РўРµР»РµС„РѕРЅ",
+  phone: "Телефон",
   facebook: "Facebook",
-  other: "Р”СЂСѓРіРѕРµ"
+  other: "Другое"
 };
 
 const settingsSectionLabels = {
-  profile: "РџСЂРѕС„РёР»СЊ",
-  team: "РљРѕРјР°РЅРґР°",
-  billing: "РўР°СЂРёС„С‹",
-  integrations: "РРЅС‚РµРіСЂР°С†РёРё",
-  security: "Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ"
+  profile: "Профиль",
+  team: "Команда",
+  billing: "Тарифы",
+  integrations: "Интеграции",
+  security: "Безопасность"
 };
 
 function formatCurrency(value) {
@@ -124,7 +124,7 @@ function formatCurrency(value) {
 
 function formatDate(value) {
   if (!value) {
-    return "РќРµ Р·Р°РґР°РЅРѕ";
+    return "Не задано";
   }
 
   return new Intl.DateTimeFormat("ru-RU", {
@@ -135,7 +135,7 @@ function formatDate(value) {
 
 function formatShortDate(value) {
   if (!value) {
-    return "вЂ”";
+    return "—";
   }
 
   return new Intl.DateTimeFormat("ru-RU", {
@@ -157,7 +157,7 @@ function formatDateTimeLocal(value) {
 
 function formatLabel(value) {
   if (!value) {
-    return "РќРµ Р·Р°РґР°РЅРѕ";
+    return "Не задано";
   }
 
   if (sourceLabels[value]) {
@@ -191,7 +191,7 @@ function createInviteSupabaseClient() {
 
 function formatPreferredSlot(dateValue, timeValue) {
   if (!dateValue) {
-    return "РќРµ СЃРѕРіР»Р°СЃРѕРІР°РЅРѕ";
+    return "Не согласовано";
   }
 
   const formattedDate = new Intl.DateTimeFormat("ru-RU", {
@@ -207,14 +207,14 @@ function getRolePermissions(role) {
 
 function getRoleAccessSummary(role) {
   if (role === "owner") {
-    return "РџРѕР»РЅС‹Р№ РґРѕСЃС‚СѓРї Рє CRM, РєРѕРјР°РЅРґРµ, РЅР°СЃС‚СЂРѕР№РєР°Рј Рё Р°РІС‚РѕРјР°С‚РёР·Р°С†РёСЏРј.";
+    return "Полный доступ к CRM, команде, настройкам и автоматизациям.";
   }
 
   if (role === "detailer") {
-    return "Р’РёРґРёС‚ С‚РѕР»СЊРєРѕ РЅР°Р·РЅР°С‡РµРЅРЅС‹Рµ Р·Р°СЏРІРєРё Рё СЂР°Р±РѕС‡СѓСЋ РёСЃС‚РѕСЂРёСЋ РєР»РёРµРЅС‚Р°.";
+    return "Видит только назначенные заявки и рабочую историю клиента.";
   }
 
-  return "РЈРїСЂР°РІР»СЏРµС‚ Р·Р°СЏРІРєР°РјРё, РєР»РёРµРЅС‚Р°РјРё Рё Р·Р°РґР°С‡Р°РјРё Р±РµР· РґРѕСЃС‚СѓРїР° Рє СЃРёСЃС‚РµРјРЅС‹Рј РЅР°СЃС‚СЂРѕР№РєР°Рј.";
+  return "Управляет заявками, клиентами и задачами без доступа к системным настройкам.";
 }
 
 function getInitialLeadForm(services) {
@@ -333,7 +333,7 @@ function LoginPage({ onAuthenticated }) {
           throw signUpError;
         }
 
-        setMessage("РђРєРєР°СѓРЅС‚ СЃРѕР·РґР°РЅ. Р•СЃР»Рё Сѓ РїСЂРѕРµРєС‚Р° РІРєР»СЋС‡РµРЅРѕ РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ РїРѕС‡С‚С‹, РїРѕРґС‚РІРµСЂРґРёС‚Рµ email Рё Р·Р°С‚РµРј РІРѕР№РґРёС‚Рµ.");
+        setMessage("Аккаунт создан. Если у проекта включено подтверждение почты, подтвердите email и затем войдите.");
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -347,7 +347,7 @@ function LoginPage({ onAuthenticated }) {
         onAuthenticated(data.session);
       }
     } catch (submitError) {
-      setError(submitError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕР№С‚Рё РІ СЃРёСЃС‚РµРјСѓ.");
+      setError(submitError.message || "Не удалось войти в систему.");
     } finally {
       setLoading(false);
     }
@@ -375,7 +375,7 @@ function LoginPage({ onAuthenticated }) {
         throw oauthError;
       }
     } catch (submitError) {
-      setError(submitError.message || "Не удалось продолжить через Google.");
+      setError(submitError.message || "�� ������� ���������� ����� Google.");
       setGoogleLoading(false);
     }
   }
@@ -387,27 +387,27 @@ function LoginPage({ onAuthenticated }) {
           <LogoWordmark />
 
           <div className="auth-copy">
-            <h1>Р’С…РѕРґ РІ СЃРёСЃС‚РµРјСѓ</h1>
-            <p>РЈРїСЂР°РІР»СЏР№С‚Рµ Р·Р°СЏРІРєР°РјРё, РєР»РёРµРЅС‚Р°РјРё Рё follow-up Р±РµР· Р»РёС€РЅРµР№ РїРµСЂРµРіСЂСѓР·РєРё.</p>
+            <h1>Вход в систему</h1>
+            <p>Управляйте заявками, клиентами и follow-up без лишней перегрузки.</p>
           </div>
 
           <div className="auth-switch">
             <button type="button" className={mode === "sign-in" ? "active" : ""} onClick={() => setMode("sign-in")}>
-              Р’С…РѕРґ
+              Вход
             </button>
             <button type="button" className={mode === "sign-up" ? "active" : ""} onClick={() => setMode("sign-up")}>
-              Р РµРіРёСЃС‚СЂР°С†РёСЏ
+              Регистрация
             </button>
           </div>
 
           <form className="auth-form" onSubmit={handleSubmit}>
             {mode === "sign-up" ? (
               <label>
-                РРјСЏ
+                Имя
                 <input
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="РРјСЏ РІР»Р°РґРµР»СЊС†Р° РёР»Рё РјРµРЅРµРґР¶РµСЂР°"
+                  placeholder="Имя владельца или менеджера"
                   required
                 />
               </label>
@@ -425,23 +425,23 @@ function LoginPage({ onAuthenticated }) {
             </label>
 
             <label>
-              РџР°СЂРѕР»СЊ
+              Пароль
               <input
                 type="password"
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="РњРёРЅРёРјСѓРј 6 СЃРёРјРІРѕР»РѕРІ"
+                placeholder="Минимум 6 символов"
                 required
               />
             </label>
 
             <button type="submit" className="button button-primary button-full" disabled={loading}>
-              {loading ? "Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РІС…РѕРґ..." : mode === "sign-up" ? "РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚" : "Р’РѕР№С‚Рё"}
+              {loading ? "Выполняется вход..." : mode === "sign-up" ? "Создать аккаунт" : "Войти"}
             </button>
           </form>
 
           <div className="auth-divider">
-            <span>РёР»Рё</span>
+            <span>или</span>
           </div>
 
           <button
@@ -451,10 +451,10 @@ function LoginPage({ onAuthenticated }) {
             disabled={loading || googleLoading}
           >
             {googleLoading
-              ? "Переходим в Google..."
+              ? "��������� � Google..."
               : mode === "sign-up"
-                ? "Зарегистрироваться через Google"
-                : "Войти через Google"}
+                ? "������������������ ����� Google"
+                : "����� ����� Google"}
           </button>
 
           {message ? <p className="status-note success">{message}</p> : null}
@@ -467,9 +467,9 @@ function LoginPage({ onAuthenticated }) {
           </div>
           <div className="auth-side-quote">
             <p>
-              вЂњРЎРёСЃС‚РµРјР° РЅР°РєРѕРЅРµС†-С‚Рѕ СЃРѕР±СЂР°Р»Р° Р·Р°СЏРІРєРё, follow-up Рё РєРѕРјР°РЅРґСѓ РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ. РЎС‚Р°Р»Рѕ РїРѕРЅСЏС‚РЅРѕ, РєС‚Рѕ РІРµРґС‘С‚ РєР»РёРµРЅС‚Р° Рё С‡С‚Рѕ РґРµР»Р°С‚СЊ РґР°Р»СЊС€Рµ.вЂќ
+              “Система наконец-то собрала заявки, follow-up и команду в одном месте. Стало понятно, кто ведёт клиента и что делать дальше.”
             </p>
-            <span>Р®СЂРёР№, РІР»Р°РґРµР»РµС† РґРµС‚РµР№Р»РёРЅРі-С†РµРЅС‚СЂР°</span>
+            <span>Юрий, владелец детейлинг-центра</span>
           </div>
         </aside>
       </div>
@@ -521,7 +521,7 @@ function PublicRequestPage({ isAuthenticated }) {
       }
 
       if (servicesError) {
-        setError(servicesError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ СѓСЃР»СѓРіРё.");
+        setError(servicesError.message || "Не удалось загрузить услуги.");
       } else {
         setServices(data || []);
         setForm((current) => ({
@@ -570,10 +570,10 @@ function PublicRequestPage({ isAuthenticated }) {
           }
         });
       } catch (webhookError) {
-        setError(webhookError.message || "Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР°, РЅРѕ РІРЅРµС€РЅРёР№ webhook Р°РІС‚РѕРјР°С‚РёР·Р°С†РёРё РЅРµ РѕС‚СЂР°Р±РѕС‚Р°Р».");
+        setError(webhookError.message || "Заявка создана, но внешний webhook автоматизации не отработал.");
       }
 
-      setSuccessMessage("Р—Р°СЏРІРєР° СѓСЃРїРµС€РЅРѕ РѕС‚РїСЂР°РІР»РµРЅР°. РњРµРЅРµРґР¶РµСЂ СѓР¶Рµ РјРѕР¶РµС‚ РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РµС‘ РІ CRM.");
+      setSuccessMessage("Заявка успешно отправлена. Менеджер уже может обработать её в CRM.");
       setForm({
         client_name: "",
         phone: "",
@@ -593,7 +593,7 @@ function PublicRequestPage({ isAuthenticated }) {
         website: ""
       });
     } catch (submitError) {
-      setError(submitError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕС‚РїСЂР°РІРёС‚СЊ Р·Р°СЏРІРєСѓ.");
+      setError(submitError.message || "Не удалось отправить заявку.");
     } finally {
       setSaving(false);
     }
@@ -604,45 +604,45 @@ function PublicRequestPage({ isAuthenticated }) {
       <section className="public-landing-card">
         <div className="public-copy-column">
           <LogoWordmark />
-          <span className="eyebrow">РћРЅР»Р°Р№РЅ-Р·Р°СЏРІРєР°</span>
-          <h1>Р—Р°РїРёС€РёС‚РµСЃСЊ РЅР° РґРµС‚РµР№Р»РёРЅРі Р±РµР· Р·РІРѕРЅРєРѕРІ Рё РѕР¶РёРґР°РЅРёСЏ.</h1>
+          <span className="eyebrow">Онлайн-заявка</span>
+          <h1>Запишитесь на детейлинг без звонков и ожидания.</h1>
           <p>
-            РћСЃС‚Р°РІСЊС‚Рµ РєРѕРЅС‚Р°РєС‚, СѓСЃР»СѓРіСѓ Рё СѓРґРѕР±РЅС‹Р№ СЃР»РѕС‚. CRM СЃСЂР°Р·Сѓ СЃРѕР·РґР°СЃС‚ РєР°СЂС‚РѕС‡РєСѓ РєР»РёРµРЅС‚Р°, Р·Р°СЏРІРєСѓ Рё follow-up РґР»СЏ РєРѕРјР°РЅРґС‹.
+            Оставьте контакт, услугу и удобный слот. CRM сразу создаст карточку клиента, заявку и follow-up для команды.
           </p>
           <div className="public-pill-row">
-            <span>Р‘С‹СЃС‚СЂС‹Р№ РєРѕРЅС‚Р°РєС‚</span>
-            <span>CRM-СЃРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ</span>
-            <span>РђРІС‚РѕРЅРѕРјРЅС‹Р№ follow-up</span>
+            <span>Быстрый контакт</span>
+            <span>CRM-синхронизация</span>
+            <span>Автономный follow-up</span>
           </div>
-          {isAuthenticated ? <p className="public-auth-hint">Р’С‹ СѓР¶Рµ РІРѕС€Р»Рё РІ CRM Рё СѓРІРёРґРёС‚Рµ РЅРѕРІСѓСЋ Р·Р°СЏРІРєСѓ СЃСЂР°Р·Сѓ РїРѕСЃР»Рµ РѕС‚РїСЂР°РІРєРё.</p> : null}
+          {isAuthenticated ? <p className="public-auth-hint">Вы уже вошли в CRM и увидите новую заявку сразу после отправки.</p> : null}
         </div>
 
         <div className="public-form-card">
           <div className="section-title">
             <div>
-              <span className="eyebrow">Р¤РѕСЂРјР° РєР»РёРµРЅС‚Р°</span>
-              <h2>РќРѕРІР°СЏ Р·Р°СЏРІРєР°</h2>
+              <span className="eyebrow">Форма клиента</span>
+              <h2>Новая заявка</h2>
             </div>
           </div>
 
-          {loadingServices ? <p className="hint-text">Р—Р°РіСЂСѓР¶Р°РµРј РґРѕСЃС‚СѓРїРЅС‹Рµ СѓСЃР»СѓРіРё...</p> : null}
+          {loadingServices ? <p className="hint-text">Загружаем доступные услуги...</p> : null}
           {error ? <div className="notice notice-error">{error}</div> : null}
           {successMessage ? <div className="notice notice-success">{successMessage}</div> : null}
 
           <form className="form-grid-shell" onSubmit={handleSubmit}>
             <div className="form-grid two-columns">
               <label>
-                РРјСЏ
+                Имя
                 <input name="client_name" value={form.client_name} onChange={updateField} placeholder="Victor Sandu" required />
               </label>
               <label>
-                РўРµР»РµС„РѕРЅ
+                Телефон
                 <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
               </label>
               <label>
-                РЈСЃР»СѓРіР°
+                Услуга
                 <select name="service_id" value={form.service_id} onChange={updateField} disabled={loadingServices}>
-                  <option value="">Р’С‹Р±РµСЂРёС‚Рµ СѓСЃР»СѓРіСѓ</option>
+                  <option value="">Выберите услугу</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>
                       {service.name}
@@ -651,41 +651,41 @@ function PublicRequestPage({ isAuthenticated }) {
                 </select>
               </label>
               <label>
-                РњР°СЂРєР°
+                Марка
                 <input name="car_make" value={form.car_make} onChange={updateField} placeholder="Audi" />
               </label>
               <label>
-                РњРѕРґРµР»СЊ / РіРѕРґ
+                Модель / год
                 <div className="split-input">
                   <input name="car_model" value={form.car_model} onChange={updateField} placeholder="Q7" />
                   <input name="car_year" type="number" min="1950" max="2100" value={form.car_year} onChange={updateField} placeholder="2020" />
                 </div>
               </label>
               <label>
-                РќРѕРјРµСЂ Р°РІС‚Рѕ
+                Номер авто
                 <input name="car_plate" value={form.car_plate} onChange={updateField} placeholder="KCC777" />
               </label>
               <label>
-                Р–РµР»Р°РµРјР°СЏ РґР°С‚Р°
+                Желаемая дата
                 <input name="preferred_date" type="date" value={form.preferred_date} onChange={updateField} />
               </label>
               <label>
-                Р–РµР»Р°РµРјРѕРµ РІСЂРµРјСЏ
-                <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="РџРѕСЃР»Рµ 18:00" />
+                Желаемое время
+                <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="После 18:00" />
               </label>
               <label>
-                РђРґСЂРµСЃ
+                Адрес
               </label>
             </div>
 
             <label>
-              РљРѕРјРјРµРЅС‚Р°СЂРёР№
+              Комментарий
               <textarea
                 name="comment"
                 value={form.comment}
                 onChange={updateField}
                 rows="4"
-                placeholder="РћРїРёС€РёС‚Рµ Р¶РµР»Р°РµРјСѓСЋ СѓСЃР»СѓРіСѓ, СЃРѕСЃС‚РѕСЏРЅРёРµ Р°РІС‚Рѕ Рё РїРѕР¶РµР»Р°РЅРёСЏ."
+                placeholder="Опишите желаемую услугу, состояние авто и пожелания."
               />
             </label>
 
@@ -701,7 +701,7 @@ function PublicRequestPage({ isAuthenticated }) {
             />
 
             <button type="submit" className="button button-primary" disabled={saving || loadingServices}>
-              {saving ? "РћС‚РїСЂР°РІР»СЏРµРј..." : "РћС‚РїСЂР°РІРёС‚СЊ Р·Р°СЏРІРєСѓ"}
+              {saving ? "Отправляем..." : "Отправить заявку"}
             </button>
           </form>
         </div>
@@ -732,7 +732,7 @@ function TopBar({ session, role, permissions, onSignOut, currentUserName }) {
       <div className="topbar-actions">
         {permissions.canCreateLead ? (
           <NavLink to="/leads" className="button button-primary topbar-cta">
-            РќРѕРІР°СЏ Р·Р°СЏРІРєР°
+            Новая заявка
           </NavLink>
         ) : null}
         {permissions.nav.includes("/settings") ? (
@@ -740,7 +740,7 @@ function TopBar({ session, role, permissions, onSignOut, currentUserName }) {
             to="/settings"
             className={({ isActive }) => (isActive ? "button button-outline active-outline" : "button button-outline")}
           >
-            РќР°СЃС‚СЂРѕР№РєРё
+            Настройки
           </NavLink>
         ) : null}
         <div className="topbar-user">
@@ -750,7 +750,7 @@ function TopBar({ session, role, permissions, onSignOut, currentUserName }) {
           </div>
           <Avatar name={fullName} />
           <button type="button" className="ghost-action" onClick={onSignOut}>
-            Р’С‹Р№С‚Рё
+            Выйти
           </button>
         </div>
       </div>
@@ -773,9 +773,9 @@ function AppLayout({ session, metrics, role, children, onSignOut, currentUserNam
 
       <main className="crm-main">
         <div className="crm-summary-bar">
-          <span>{metrics.newCount} РЅРѕРІС‹С…</span>
-          <span>{metrics.openTasks} РѕС‚РєСЂС‹С‚С‹С… Р·Р°РґР°С‡</span>
-          <span>{metrics.followUpCount} follow-up РЅР° СЃРµРіРѕРґРЅСЏ</span>
+          <span>{metrics.newCount} новых</span>
+          <span>{metrics.openTasks} открытых задач</span>
+          <span>{metrics.followUpCount} follow-up на сегодня</span>
         </div>
         {children}
       </main>
@@ -797,40 +797,40 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
   return (
     <section className="page-stack">
       <div className="metrics-grid">
-        <MetricCard icon="CL" label="Р’СЃРµРіРѕ РєР»РёРµРЅС‚РѕРІ" value={metrics.clientsCount} accent />
-        <MetricCard icon="TD" label="Р—Р°СЏРІРєРё СЃРµРіРѕРґРЅСЏ" value={metrics.todayLeads} />
-        <MetricCard icon="в‚¬" label="Р’С‹СЂСѓС‡РєР° РјРµСЃСЏС†" value={formatCurrency(metrics.monthRevenue)} />
-        <MetricCard icon="TK" label="Р—Р°РґР°С‡Рё РѕС‚РєСЂС‹С‚С‹" value={metrics.openTasks} />
+        <MetricCard icon="CL" label="Всего клиентов" value={metrics.clientsCount} accent />
+        <MetricCard icon="TD" label="Заявки сегодня" value={metrics.todayLeads} />
+        <MetricCard icon="€" label="Выручка месяц" value={formatCurrency(metrics.monthRevenue)} />
+        <MetricCard icon="TK" label="Задачи открыты" value={metrics.openTasks} />
       </div>
 
       <section className="surface-card month-summary-card">
         <div className="section-title">
           <div>
-            <span className="eyebrow">Р В¤Р С‘Р Р…Р В°Р Р…РЎРѓРЎвЂ№</span>
-            <h2>Р ВРЎвЂљР С•Р С–Р С‘ Р СР ВµРЎРѓРЎРЏРЎвЂ Р В°</h2>
+            <span className="eyebrow">Р¤РёРЅР°РЅСЃС‹</span>
+            <h2>РС‚РѕРіРё РјРµСЃСЏС†Р°</h2>
           </div>
         </div>
 
         <div className="month-summary-grid">
           <article className="month-summary-stat">
             <strong>{metrics.monthClosedLeads}</strong>
-            <span>Р вЂ”Р В°Р С”РЎР‚РЎвЂ№РЎвЂљР С• Р В·Р В°РЎРЏР Р†Р С•Р С”</span>
+            <span>Р—Р°РєСЂС‹С‚Рѕ Р·Р°СЏРІРѕРє</span>
           </article>
           <article className="month-summary-stat">
             <strong>{formatCurrency(metrics.monthAverageTicket)}</strong>
-            <span>Р РЋРЎР‚Р ВµР Т‘Р Р…Р С‘Р в„– РЎвЂЎР ВµР С”</span>
+            <span>РЎСЂРµРґРЅРёР№ С‡РµРє</span>
           </article>
           <article className="month-summary-stat">
             <strong>{formatCurrency(metrics.monthRevenue)}</strong>
-            <span>Р С™Р В°РЎРѓРЎРѓР В° Р В·Р В° Р СР ВµРЎРѓРЎРЏРЎвЂ </span>
+            <span>РљР°СЃСЃР° Р·Р° РјРµСЃСЏС†</span>
           </article>
         </div>
 
         <div className="data-table compact-table">
           <div className="table-head month-revenue-head">
-            <span>Р Р€РЎРѓР В»РЎС“Р С–Р В°</span>
-            <span>Р вЂ”Р В°РЎРЏР Р†Р С•Р С”</span>
-            <span>Р РЋРЎС“Р СР СР В°</span>
+            <span>РЈСЃР»СѓРіР°</span>
+            <span>Р—Р°СЏРІРѕРє</span>
+            <span>РЎСѓРјРјР°</span>
           </div>
           {metrics.monthServiceRevenue.length ? (
             metrics.monthServiceRevenue.map((item) => (
@@ -841,7 +841,7 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
               </div>
             ))
           ) : (
-            <div className="table-empty-state">Р вЂ™ РЎРЊРЎвЂљР С•Р С Р СР ВµРЎРѓРЎРЏРЎвЂ Р Вµ Р С—Р С•Р С”Р В° Р Р…Р ВµРЎвЂљ Р В·Р В°Р С”РЎР‚РЎвЂ№РЎвЂљРЎвЂ№РЎвЂ¦ Р В·Р В°РЎРЏР Р†Р С•Р С” Р Т‘Р В»РЎРЏ Р С”Р В°РЎРѓРЎРѓРЎвЂ№.</div>
+            <div className="table-empty-state">Р’ СЌС‚РѕРј РјРµСЃСЏС†Рµ РїРѕРєР° РЅРµС‚ Р·Р°РєСЂС‹С‚С‹С… Р·Р°СЏРІРѕРє РґР»СЏ РєР°СЃСЃС‹.</div>
           )}
         </div>
       </section>
@@ -849,26 +849,26 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
       <section className="surface-card">
         <div className="section-title">
           <div>
-            <span className="eyebrow">РћРїРµСЂР°С‚РёРІРЅР°СЏ СЃРІРѕРґРєР°</span>
-            <h2>РџРѕСЃР»РµРґРЅРёРµ Р·Р°СЏРІРєРё</h2>
+            <span className="eyebrow">Оперативная сводка</span>
+            <h2>Последние заявки</h2>
           </div>
         </div>
 
         <div className="data-table">
           <div className="table-head">
-            <span>РљР»РёРµРЅС‚</span>
-            <span>РЈСЃР»СѓРіР°</span>
-            <span>РЎС‚Р°С‚СѓСЃ</span>
-            <span>Р”Р°С‚Р°</span>
-            <span>РЎСѓРјРјР°</span>
-            <span>Р”РµР№СЃС‚РІРёРµ</span>
+            <span>Клиент</span>
+            <span>Услуга</span>
+            <span>Статус</span>
+            <span>Дата</span>
+            <span>Сумма</span>
+            <span>Действие</span>
           </div>
 
           {leads.length ? (
             leads.slice(0, 6).map((lead) => (
               <div key={lead.id} className="table-body-row">
-                <span className="cell-strong">{lead.clients?.name || "Р‘РµР· РёРјРµРЅРё"}</span>
-                <span>{lead.services?.name || "РќРµ РІС‹Р±СЂР°РЅР°"}</span>
+                <span className="cell-strong">{lead.clients?.name || "Без имени"}</span>
+                <span>{lead.services?.name || "Не выбрана"}</span>
                 <span>
                   <StatusBadge status={lead.status} />
                 </span>
@@ -876,13 +876,13 @@ function DashboardPage({ metrics, leads, onOpenLead }) {
                 <span className="amount-cell">{formatCurrency(lead.estimated_price)}</span>
                 <span>
                   <NavLink to="/leads" className="table-link" onClick={() => onOpenLead(lead.id)}>
-                    РћС‚РєСЂС‹С‚СЊ
+                    Открыть
                   </NavLink>
                 </span>
               </div>
             ))
           ) : (
-            <div className="table-empty-state">РџРѕРєР° РЅРµС‚ Р·Р°СЏРІРѕРє РґР»СЏ РѕС‚РѕР±СЂР°Р¶РµРЅРёСЏ.</div>
+            <div className="table-empty-state">Пока нет заявок для отображения.</div>
           )}
         </div>
       </section>
@@ -920,19 +920,19 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
     <section className="surface-card">
       <div className="section-title">
         <div>
-          <span className="eyebrow">Р”РѕР±Р°РІР»РµРЅРёРµ</span>
-          <h2>РќРѕРІР°СЏ Р·Р°СЏРІРєР°</h2>
+          <span className="eyebrow">Добавление</span>
+          <h2>Новая заявка</h2>
         </div>
       </div>
 
       <form className="form-grid-shell" onSubmit={handleSubmit}>
         <div className="form-grid two-columns">
           <label>
-            РРјСЏ РєР»РёРµРЅС‚Р°
+            Имя клиента
             <input name="client_name" value={form.client_name} onChange={updateField} placeholder="Andrei Popa" required />
           </label>
           <label>
-            РўРµР»РµС„РѕРЅ
+            Телефон
             <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
           </label>
           <label>
@@ -940,9 +940,9 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             <input name="email" type="email" value={form.email} onChange={updateField} placeholder="optional@email.com" />
           </label>
           <label>
-            РЈСЃР»СѓРіР°
+            Услуга
             <select name="service_id" value={form.service_id} onChange={updateField}>
-              <option value="">Р‘РµР· СѓСЃР»СѓРіРё</option>
+              <option value="">Без услуги</option>
               {services.map((service) => (
                 <option key={service.id} value={service.id}>
                   {service.name}
@@ -951,7 +951,7 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             </select>
           </label>
           <label>
-            РСЃС‚РѕС‡РЅРёРє
+            Источник
             <select name="source" value={form.source} onChange={updateField}>
               {sourceOptions.map((source) => (
                 <option key={source} value={source}>
@@ -961,31 +961,31 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             </select>
           </label>
           <label>
-            РЎСѓРјРјР°
+            Сумма
             <input name="estimated_price" type="number" min="0" value={form.estimated_price} onChange={updateField} placeholder="120" />
           </label>
           <label>
-            Р”Р°С‚Р°
+            Дата
             <input name="preferred_date" type="date" value={form.preferred_date} onChange={updateField} />
           </label>
           <label>
-            Р’СЂРµРјСЏ
-            <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="РџРѕСЃР»Рµ 18:00" />
+            Время
+            <input name="preferred_time" value={form.preferred_time} onChange={updateField} placeholder="После 18:00" />
           </label>
           <label>
             Follow-up
             <input name="follow_up_at" type="datetime-local" value={form.follow_up_at} onChange={updateField} />
           </label>
           <label>
-            РќРѕРјРµСЂ Р°РІС‚Рѕ
+            Номер авто
             <input name="car_plate" value={form.car_plate} onChange={updateField} placeholder="KAA123" />
           </label>
           <label>
-            РњР°СЂРєР°
+            Марка
             <input name="car_make" value={form.car_make} onChange={updateField} placeholder="BMW" />
           </label>
           <label>
-            РњРѕРґРµР»СЊ / РіРѕРґ
+            Модель / год
             <div className="split-input">
               <input name="car_model" value={form.car_model} onChange={updateField} placeholder="X5" />
               <input name="car_year" type="number" min="1950" max="2100" value={form.car_year} onChange={updateField} placeholder="2019" />
@@ -994,17 +994,17 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
         </div>
 
         <label>
-          РђРґСЂРµСЃ
+          Адрес
           <input name="address" value={form.address} onChange={updateField} placeholder="Botanica, Chisinau" />
         </label>
 
         <label>
-          РљРѕРјРјРµРЅС‚Р°СЂРёР№
-          <textarea name="comment" value={form.comment} onChange={updateField} rows="4" placeholder="Р§С‚Рѕ РїРѕРїСЂРѕСЃРёР» РєР»РёРµРЅС‚, СЃСЂРѕС‡РЅРѕСЃС‚СЊ, РѕР¶РёРґР°РЅРёСЏ..." />
+          Комментарий
+          <textarea name="comment" value={form.comment} onChange={updateField} rows="4" placeholder="Что попросил клиент, срочность, ожидания..." />
         </label>
 
         <button type="submit" className="button button-primary" disabled={creatingLead}>
-          {creatingLead ? "РЎРѕР·РґР°С‘Рј..." : "Р”РѕР±Р°РІРёС‚СЊ Р·Р°СЏРІРєСѓ"}
+          {creatingLead ? "Создаём..." : "Добавить заявку"}
         </button>
       </form>
     </section>
@@ -1015,10 +1015,10 @@ function LeadCard({ lead, isActive, onClick }) {
   return (
     <button type="button" className={isActive ? "lead-kanban-card active" : "lead-kanban-card"} onClick={onClick}>
       <div className="lead-kanban-header">
-        <strong>{lead.clients?.name || "Р‘РµР· РёРјРµРЅРё"}</strong>
+        <strong>{lead.clients?.name || "Без имени"}</strong>
         <Avatar name={lead.clients?.name || "Client"} />
       </div>
-      <span>{lead.services?.name || "РЈСЃР»СѓРіР° РЅРµ РІС‹Р±СЂР°РЅР°"}</span>
+      <span>{lead.services?.name || "Услуга не выбрана"}</span>
       <div className="lead-kanban-footer">
         <strong>{formatCurrency(lead.estimated_price)}</strong>
         <small>{formatShortDate(lead.created_at)}</small>
@@ -1095,20 +1095,20 @@ function LeadsPage({
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>Р—Р°СЏРІРєРё</h1>
-          <p>Pipeline Р·Р°СЏРІРѕРє, Р±С‹СЃС‚СЂС‹Р№ РІС‹Р±РѕСЂ РєР»РёРµРЅС‚Р° Рё СЂР°Р±РѕС‡Р°СЏ РєР°СЂС‚РѕС‡РєР° СЃРїСЂР°РІР°.</p>
+          <h1>Заявки</h1>
+          <p>Pipeline заявок, быстрый выбор клиента и рабочая карточка справа.</p>
         </div>
         <div className="page-header-actions">
           {permissions.canCreateLead ? (
             <button type="button" className="button button-primary" onClick={() => setShowComposer((current) => !current)}>
-              {showComposer ? "РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ" : "Р”РѕР±Р°РІРёС‚СЊ Р·Р°СЏРІРєСѓ"}
+              {showComposer ? "Скрыть форму" : "Добавить заявку"}
             </button>
           ) : null}
           <input
             className="search-input"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="РџРѕРёСЃРє РїРѕ РєР»РёРµРЅС‚Сѓ, СѓСЃР»СѓРіРµ, РЅРѕРјРµСЂСѓ"
+            placeholder="Поиск по клиенту, услуге, номеру"
           />
         </div>
       </div>
@@ -1116,17 +1116,17 @@ function LeadsPage({
       {permissions.canCreateLead && showComposer ? <NewLeadForm services={services} onCreateLead={createLead} creatingLead={creatingLead} /> : null}
       {permissions.canCreateLead && !showComposer ? (
         <section className="surface-card compact-note-card composer-hint-card">
-          <span className="eyebrow">Р‘С‹СЃС‚СЂС‹Р№ РІРІРѕРґ</span>
-          <h2>РќРѕРІР°СЏ Р·Р°СЏРІРєР° СЃРєСЂС‹С‚Р°</h2>
-          <p>РћС‚РєСЂРѕР№С‚Рµ С„РѕСЂРјСѓ С‚РѕР»СЊРєРѕ РєРѕРіРґР° РЅСѓР¶РЅРѕ РІРЅРµСЃС‚Рё Р»РёРґ РІСЂСѓС‡РЅСѓСЋ. РўР°Рє pipeline Рё СЂР°Р±РѕС‡Р°СЏ РєР°СЂС‚РѕС‡РєР° РѕСЃС‚Р°СЋС‚СЃСЏ РІ С„РѕРєСѓСЃРµ РІРѕ РІСЂРµРјСЏ Р·РІРѕРЅРєРѕРІ Рё РѕР±СЂР°Р±РѕС‚РєРё РІС…РѕРґСЏС‰РёС… Р·Р°СЏРІРѕРє.</p>
+          <span className="eyebrow">Быстрый ввод</span>
+          <h2>Новая заявка скрыта</h2>
+          <p>Откройте форму только когда нужно внести лид вручную. Так pipeline и рабочая карточка остаются в фокусе во время звонков и обработки входящих заявок.</p>
         </section>
       ) : null}
 
       {!permissions.canCreateLead ? (
         <section className="surface-card compact-note-card">
-          <span className="eyebrow">Р РѕР»СЊ</span>
-          <h2>РћРїРµСЂР°С†РёРѕРЅРЅС‹Р№ РґРѕСЃС‚СѓРї</h2>
-          <p>РњР°СЃС‚РµСЂ РІРёРґРёС‚ С‚РѕР»СЊРєРѕ РЅР°Р·РЅР°С‡РµРЅРЅС‹Рµ Р·Р°СЏРІРєРё. РЎС‚Р°С‚СѓСЃС‹, follow-up Рё РІРЅСѓС‚СЂРµРЅРЅРёРµ Р·Р°РјРµС‚РєРё РѕСЃС‚Р°СЋС‚СЃСЏ Сѓ РјРµРЅРµРґР¶РµСЂР° Рё РґРёСЂРµРєС‚РѕСЂР°.</p>
+          <span className="eyebrow">Роль</span>
+          <h2>Операционный доступ</h2>
+          <p>Мастер видит только назначенные заявки. Статусы, follow-up и внутренние заметки остаются у менеджера и директора.</p>
         </section>
       ) : null}
 
@@ -1149,7 +1149,7 @@ function LeadsPage({
                     />
                   ))
                 ) : (
-                  <div className="kanban-empty">{leads.length ? "РќРµС‚ РєР°СЂС‚РѕС‡РµРє РІ СЌС‚РѕР№ РєРѕР»РѕРЅРєРµ." : emptyMessage}</div>
+                  <div className="kanban-empty">{leads.length ? "Нет карточек в этой колонке." : emptyMessage}</div>
                 )}
               </div>
             </section>
@@ -1181,8 +1181,8 @@ function TimelineEvent({ item, currentUserName }) {
           <strong>{eventLabels[item.type] || item.type}</strong>
           <span>{formatDate(item.created_at)}</span>
         </div>
-        <p>{item.note || "Р‘РµР· РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕРіРѕ РєРѕРјРјРµРЅС‚Р°СЂРёСЏ."}</p>
-        <small>{item.created_by ? currentUserName || "РљРѕРјР°РЅРґР° CRM" : "РЎРёСЃС‚РµРјР°"}</small>
+        <p>{item.note || "Без дополнительного комментария."}</p>
+        <small>{item.created_by ? currentUserName || "Команда CRM" : "Система"}</small>
       </div>
     </article>
   );
@@ -1202,8 +1202,8 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
   if (!lead) {
     return (
       <section className="surface-card detail-empty-card">
-        <h2>Р—Р°СЏРІРєР° РЅРµ РІС‹Р±СЂР°РЅР°</h2>
-        <p>Р’С‹Р±РµСЂРёС‚Рµ РєР°СЂС‚РѕС‡РєСѓ РёР· pipeline, Рё Р·РґРµСЃСЊ РѕС‚РєСЂРѕРµС‚СЃСЏ РїРѕР»РЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ РїРѕ РєР»РёРµРЅС‚Сѓ Рё СЂР°Р±РѕС‚Рµ.</p>
+        <h2>Заявка не выбрана</h2>
+        <p>Выберите карточку из pipeline, и здесь откроется полная информация по клиенту и работе.</p>
       </section>
     );
   }
@@ -1250,17 +1250,17 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
         <div className="client-hero-main">
           <Avatar name={lead.clients?.name} large />
           <div>
-            <span className="eyebrow">РљР°СЂС‚РѕС‡РєР° Р·Р°СЏРІРєРё</span>
-            <h2>{lead.clients?.name || "РљР»РёРµРЅС‚ Р±РµР· РёРјРµРЅРё"}</h2>
+            <span className="eyebrow">Карточка заявки</span>
+            <h2>{lead.clients?.name || "Клиент без имени"}</h2>
             <p>
-              {lead.clients?.phone || "Р‘РµР· С‚РµР»РµС„РѕРЅР°"}{lead.clients?.email ? ` вЂў ${lead.clients.email}` : ""}
+              {lead.clients?.phone || "Без телефона"}{lead.clients?.email ? ` • ${lead.clients.email}` : ""}
             </p>
           </div>
         </div>
 
         <div className="client-hero-actions">
           <button type="button" className="button button-outline" onClick={() => onPhoneAction?.(lead.clients?.phone)}>
-            РџРѕР·РІРѕРЅРёС‚СЊ
+            Позвонить
           </button>
           <a
             className="button button-outline"
@@ -1268,7 +1268,7 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
             target="_blank"
             rel="noreferrer"
           >
-            РќР°РїРёСЃР°С‚СЊ
+            Написать
           </a>
           <StatusBadge status={lead.status} />
         </div>
@@ -1276,49 +1276,49 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
 
       <div className="detail-grid">
         <div className="detail-card-item">
-          <span>РЈСЃР»СѓРіР°</span>
-          <strong>{lead.services?.name || "РќРµ РІС‹Р±СЂР°РЅР°"}</strong>
+          <span>Услуга</span>
+          <strong>{lead.services?.name || "Не выбрана"}</strong>
         </div>
         <div className="detail-card-item">
-          <span>РЎСѓРјРјР°</span>
+          <span>Сумма</span>
           <strong>{formatCurrency(lead.estimated_price)}</strong>
         </div>
         <div className="detail-card-item">
-          <span>РђРІС‚РѕРјРѕР±РёР»СЊ</span>
-          <strong>{[lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "РќРµ СѓРєР°Р·Р°РЅ"}</strong>
+          <span>Автомобиль</span>
+          <strong>{[lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Не указан"}</strong>
         </div>
         <div className="detail-card-item">
-          <span>РСЃС‚РѕС‡РЅРёРє</span>
+          <span>Источник</span>
           <strong>{formatLabel(lead.source)}</strong>
         </div>
         <div className="detail-card-item">
-          <span>РџСЂРµРґРїРѕС‡С‚РёС‚РµР»СЊРЅС‹Р№ СЃР»РѕС‚</span>
+          <span>Предпочтительный слот</span>
           <strong>{formatPreferredSlot(lead.preferred_date, lead.preferred_time)}</strong>
         </div>
         <div className="detail-card-item">
           <span>Follow-up</span>
-          <strong>{lead.follow_up_at ? formatDate(lead.follow_up_at) : "РќРµ РЅР°Р·РЅР°С‡РµРЅ"}</strong>
+          <strong>{lead.follow_up_at ? formatDate(lead.follow_up_at) : "Не назначен"}</strong>
         </div>
       </div>
 
       <div className="detail-stack">
         <div className="detail-card-item block">
-          <span>РђРґСЂРµСЃ</span>
-          <p>{lead.address || "РђРґСЂРµСЃ РїРѕРєР° РЅРµ СѓРєР°Р·Р°РЅ."}</p>
+          <span>Адрес</span>
+          <p>{lead.address || "Адрес пока не указан."}</p>
         </div>
 
         <div className="detail-card-item block">
-          <span>РљРѕРјРјРµРЅС‚Р°СЂРёР№ РєР»РёРµРЅС‚Р°</span>
-          <p>{lead.comment || "РљРѕРјРјРµРЅС‚Р°СЂРёР№ РЅРµ РґРѕР±Р°РІР»РµРЅ."}</p>
+          <span>Комментарий клиента</span>
+          <p>{lead.comment || "Комментарий не добавлен."}</p>
         </div>
       </div>
 
       <div className="detail-tabs">
         <button type="button" className="tab-button active">
-          РСЃС‚РѕСЂРёСЏ
+          История
         </button>
         <button type="button" className="tab-button">
-          Р—Р°РјРµС‚РєРё
+          Заметки
         </button>
       </div>
 
@@ -1327,7 +1327,7 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
           <form className="followup-form" onSubmit={handleFollowUpSubmit}>
             <input type="datetime-local" value={followUpInput} onChange={(event) => setFollowUpInput(event.target.value)} />
             <button type="submit" className="button button-primary" disabled={savingFollowUp}>
-              {savingFollowUp ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ follow-up"}
+              {savingFollowUp ? "Сохраняем..." : "Сохранить follow-up"}
             </button>
             <button
               type="button"
@@ -1335,7 +1335,7 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
               disabled={savingFollowUp || (!lead.follow_up_at && !followUpInput)}
               onClick={handleClearFollowUp}
             >
-              РћС‡РёСЃС‚РёС‚СЊ
+              Очистить
             </button>
           </form>
 
@@ -1348,23 +1348,23 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
                 disabled={statusSavingId === lead.id}
                 onClick={() => updateLeadStatus(lead.id, status)}
               >
-                {statusSavingId === lead.id && status === lead.status ? "РЎРѕС…СЂР°РЅСЏРµРј..." : statusLabels[status] || status}
+                {statusSavingId === lead.id && status === lead.status ? "Сохраняем..." : statusLabels[status] || status}
               </button>
             ))}
           </div>
         </div>
       ) : (
-        <p className="hint-text">РЈ РјР°СЃС‚РµСЂР° С‚РѕР»СЊРєРѕ РїСЂРѕСЃРјРѕС‚СЂ. РЎС‚Р°С‚СѓСЃ, follow-up Рё Р·Р°РјРµС‚РєРё РёР·РјРµРЅСЏСЋС‚СЃСЏ РјРµРЅРµРґР¶РµСЂРѕРј РёР»Рё РґРёСЂРµРєС‚РѕСЂРѕРј.</p>
+        <p className="hint-text">У мастера только просмотр. Статус, follow-up и заметки изменяются менеджером или директором.</p>
       )}
 
       {permissions.canEditLead ? (
         <form className="note-composer" onSubmit={handleAddNote}>
           <label>
-            Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ Р·Р°РјРµС‚РєР°
-            <textarea value={note} onChange={(event) => setNote(event.target.value)} rows="3" placeholder="РџРѕР·РІРѕРЅРёР»Рё РєР»РёРµРЅС‚Сѓ, Р¶РґС‘Рј РїРѕРґС‚РІРµСЂР¶РґРµРЅРёРµ..." />
+            Внутренняя заметка
+            <textarea value={note} onChange={(event) => setNote(event.target.value)} rows="3" placeholder="Позвонили клиенту, ждём подтверждение..." />
           </label>
           <button type="submit" className="button button-primary" disabled={savingNote}>
-            {savingNote ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "Р”РѕР±Р°РІРёС‚СЊ Р·Р°РјРµС‚РєСѓ"}
+            {savingNote ? "Сохраняем..." : "Добавить заметку"}
           </button>
         </form>
       ) : null}
@@ -1374,13 +1374,13 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
           {leadEvents.length ? (
             leadEvents.map((item) => <TimelineEvent key={item.id} item={item} currentUserName={currentUserName} />)
           ) : (
-            <div className="timeline-empty">РСЃС‚РѕСЂРёСЏ РїРѕСЏРІРёС‚СЃСЏ Р·РґРµСЃСЊ РїРѕСЃР»Рµ РїРµСЂРІС‹С… РёР·РјРµРЅРµРЅРёР№ РїРѕ Р·Р°СЏРІРєРµ.</div>
+            <div className="timeline-empty">История появится здесь после первых изменений по заявке.</div>
           )}
         </div>
 
         <aside className="notes-sidebar">
           <div className="notes-sidebar-head">
-            <strong>Р—Р°РјРµС‚РєРё</strong>
+            <strong>Заметки</strong>
             <span>{noteEvents.length}</span>
           </div>
           {noteEvents.length ? (
@@ -1391,7 +1391,7 @@ function LeadDetailCard({ lead, leadEvents, currentUserName, permissions, onPhon
               </article>
             ))
           ) : (
-            <div className="notes-empty">РџРѕРєР° РЅРµС‚ РІРЅСѓС‚СЂРµРЅРЅРёС… Р·Р°РјРµС‚РѕРє.</div>
+            <div className="notes-empty">Пока нет внутренних заметок.</div>
           )}
         </aside>
       </div>
@@ -1425,15 +1425,15 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>РљР»РёРµРЅС‚С‹</h1>
-          <p>Р‘Р°Р·Р° РєР»РёРµРЅС‚РѕРІ СЃ РёСЃС‚РѕСЂРёРµР№ РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёР№, Р·Р°СЏРІРєР°РјРё Рё Р·Р°РјРµС‚РєР°РјРё РєРѕРјР°РЅРґС‹.</p>
+          <h1>Клиенты</h1>
+          <p>База клиентов с историей взаимодействий, заявками и заметками команды.</p>
         </div>
       </div>
 
       <div className="clients-layout">
         <section className="surface-card client-list-card">
           <div className="section-title compact">
-            <h2>РЎРїРёСЃРѕРє РєР»РёРµРЅС‚РѕРІ</h2>
+            <h2>Список клиентов</h2>
           </div>
           <div className="client-list">
             {clients.map((client) => (
@@ -1460,17 +1460,17 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
                 <div className="client-hero-main">
                   <Avatar name={selectedClient.name} large />
                   <div>
-                    <span className="eyebrow">РљР°СЂС‚РѕС‡РєР° РєР»РёРµРЅС‚Р°</span>
+                    <span className="eyebrow">Карточка клиента</span>
                     <h2>{selectedClient.name}</h2>
                     <p>
-                      {selectedClient.phone || "РўРµР»РµС„РѕРЅ РЅРµ СѓРєР°Р·Р°РЅ"}
-                      {selectedClient.email ? ` вЂў ${selectedClient.email}` : ""}
+                      {selectedClient.phone || "Телефон не указан"}
+                      {selectedClient.email ? ` • ${selectedClient.email}` : ""}
                     </p>
                   </div>
                 </div>
                 <div className="client-hero-actions">
                   <button type="button" className="button button-outline" onClick={() => onPhoneAction?.(selectedClient.phone)}>
-                    РџРѕР·РІРѕРЅРёС‚СЊ
+                    Позвонить
                   </button>
                   <a
                     className="button button-outline"
@@ -1478,10 +1478,10 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
                     target="_blank"
                     rel="noreferrer"
                   >
-                    РќР°РїРёСЃР°С‚СЊ
+                    Написать
                   </a>
                   <NavLink to="/leads" className="button button-primary">
-                    РќРѕРІР°СЏ Р·Р°СЏРІРєР°
+                    Новая заявка
                   </NavLink>
                 </div>
               </div>
@@ -1494,7 +1494,7 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
                     className={activeTab === tab ? "tab-button active" : "tab-button"}
                     onClick={() => setActiveTab(tab)}
                   >
-                    {tab === "history" ? "РСЃС‚РѕСЂРёСЏ" : tab === "leads" ? "Р—Р°СЏРІРєРё" : "Р—Р°РјРµС‚РєРё"}
+                    {tab === "history" ? "История" : tab === "leads" ? "Заявки" : "Заметки"}
                   </button>
                 ))}
               </div>
@@ -1502,9 +1502,9 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
               {activeTab === "history" ? (
                 <div className="timeline-column">
                   {clientEvents.length ? (
-                    clientEvents.map((item) => <TimelineEvent key={item.id} item={item} currentUserName="РљРѕРјР°РЅРґР° CRM" />)
+                    clientEvents.map((item) => <TimelineEvent key={item.id} item={item} currentUserName="Команда CRM" />)
                   ) : (
-                    <div className="timeline-empty">РЈ СЌС‚РѕРіРѕ РєР»РёРµРЅС‚Р° РµС‰С‘ РЅРµС‚ РёСЃС‚РѕСЂРёРё РІР·Р°РёРјРѕРґРµР№СЃС‚РІРёР№.</div>
+                    <div className="timeline-empty">У этого клиента ещё нет истории взаимодействий.</div>
                   )}
                 </div>
               ) : null}
@@ -1512,18 +1512,18 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
               {activeTab === "leads" ? (
                 <div className="data-table compact-table">
                   <div className="table-head">
-                    <span>Р—Р°СЏРІРєР°</span>
-                    <span>РЈСЃР»СѓРіР°</span>
-                    <span>РЎС‚Р°С‚СѓСЃ</span>
-                    <span>Р”Р°С‚Р°</span>
-                    <span>РЎСѓРјРјР°</span>
-                    <span>Р”РµР№СЃС‚РІРёРµ</span>
+                    <span>Заявка</span>
+                    <span>Услуга</span>
+                    <span>Статус</span>
+                    <span>Дата</span>
+                    <span>Сумма</span>
+                    <span>Действие</span>
                   </div>
                   {clientLeads.length ? (
                     clientLeads.map((lead) => (
                       <div key={lead.id} className="table-body-row">
                         <span className="cell-strong">{selectedClient.name}</span>
-                        <span>{lead.services?.name || "РќРµ РІС‹Р±СЂР°РЅР°"}</span>
+                        <span>{lead.services?.name || "Не выбрана"}</span>
                         <span>
                           <StatusBadge status={lead.status} />
                         </span>
@@ -1531,13 +1531,13 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
                         <span className="amount-cell">{formatCurrency(lead.estimated_price)}</span>
                         <span>
                           <NavLink to="/leads" className="table-link">
-                            РћС‚РєСЂС‹С‚СЊ
+                            Открыть
                           </NavLink>
                         </span>
                       </div>
                     ))
                   ) : (
-                    <div className="table-empty-state">РЈ РєР»РёРµРЅС‚Р° РїРѕРєР° РЅРµС‚ Р·Р°СЏРІРѕРє.</div>
+                    <div className="table-empty-state">У клиента пока нет заявок.</div>
                   )}
                 </div>
               ) : null}
@@ -1552,13 +1552,13 @@ function ClientsPage({ clients, leads, leadEvents, onPhoneAction }) {
                       </article>
                     ))
                   ) : (
-                    <div className="notes-empty">Р’РЅСѓС‚СЂРµРЅРЅРёС… Р·Р°РјРµС‚РѕРє РїРѕ РєР»РёРµРЅС‚Сѓ РїРѕРєР° РЅРµС‚.</div>
+                    <div className="notes-empty">Внутренних заметок по клиенту пока нет.</div>
                   )}
                 </div>
               ) : null}
             </>
           ) : (
-            <div className="table-empty-state">РљР»РёРµРЅС‚С‹ РїРѕРєР° РЅРµ Р·Р°РіСЂСѓР¶РµРЅС‹.</div>
+            <div className="table-empty-state">Клиенты пока не загружены.</div>
           )}
         </section>
       </div>
@@ -1579,8 +1579,8 @@ function TasksPage({ leads }) {
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>Р—Р°РґР°С‡Рё</h1>
-          <p>РћС‚РєСЂС‹С‚С‹Рµ follow-up Рё СЂР°Р±РѕС‡РёРµ Р·Р°СЏРІРєРё, РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓСЋС‚ РґРµР№СЃС‚РІРёСЏ РєРѕРјР°РЅРґС‹.</p>
+          <h1>Задачи</h1>
+          <p>Открытые follow-up и рабочие заявки, которые требуют действия команды.</p>
         </div>
       </div>
 
@@ -1592,8 +1592,8 @@ function TasksPage({ leads }) {
                 <div className="task-item-main">
                   <MiniIcon label="TK" />
                   <div>
-                    <strong>{lead.clients?.name || "РљР»РёРµРЅС‚ Р±РµР· РёРјРµРЅРё"}</strong>
-                    <span>{lead.services?.name || "Р‘РµР· СѓСЃР»СѓРіРё"}</span>
+                    <strong>{lead.clients?.name || "Клиент без имени"}</strong>
+                    <span>{lead.services?.name || "Без услуги"}</span>
                   </div>
                 </div>
                 <div className="task-item-side">
@@ -1603,7 +1603,7 @@ function TasksPage({ leads }) {
               </article>
             ))
           ) : (
-            <div className="table-empty-state">РЎРµР№С‡Р°СЃ РЅРµС‚ РѕС‚РєСЂС‹С‚С‹С… Р·Р°РґР°С‡ РґР»СЏ РєРѕРјР°РЅРґС‹.</div>
+            <div className="table-empty-state">Сейчас нет открытых задач для команды.</div>
           )}
         </div>
       </section>
@@ -1616,8 +1616,8 @@ function ServicesPage({ services }) {
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>РЈСЃР»СѓРіРё</h1>
-          <p>РљР°С‚Р°Р»РѕРі СѓСЃР»СѓРі СЃ Р±Р°Р·РѕРІРѕР№ СЃС‚РѕРёРјРѕСЃС‚СЊСЋ Рё РґР»РёС‚РµР»СЊРЅРѕСЃС‚СЊСЋ РґР»СЏ РјРµРЅРµРґР¶РµСЂР°.</p>
+          <h1>Услуги</h1>
+          <p>Каталог услуг с базовой стоимостью и длительностью для менеджера.</p>
         </div>
       </div>
 
@@ -1627,7 +1627,7 @@ function ServicesPage({ services }) {
             <MiniIcon label="SR" />
             <strong>{service.name}</strong>
             <span>{formatCurrency(service.base_price)}</span>
-            <p>{service.duration_minutes} РјРёРЅ.</p>
+            <p>{service.duration_minutes} мин.</p>
           </article>
         ))}
       </div>
@@ -1643,12 +1643,12 @@ function SettingsPage({ webhookEnabled, role }) {
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>РўРµРєСѓС‰Р°СЏ СЂРѕР»СЊ</strong>
+            <strong>Текущая роль</strong>
             <p>{roleLabels[role] || roleLabels.manager}</p>
           </article>
           <article className="settings-form-card">
-            <strong>Р Р°Р±РѕС‡Р°СЏ Р·РѕРЅР°</strong>
-            <p>CRM РїРѕРґРєР»СЋС‡РµРЅР° Рє Supabase Рё РёСЃРїРѕР»СЊР·СѓРµС‚ Р±СЂР°СѓР·РµСЂРЅСѓСЋ Р°СѓС‚РµРЅС‚РёС„РёРєР°С†РёСЋ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ РїСЂРѕС„РёР»СЏ.</p>
+            <strong>Рабочая зона</strong>
+            <p>CRM подключена к Supabase и использует браузерную аутентификацию для текущего профиля.</p>
           </article>
         </div>
       );
@@ -1658,8 +1658,8 @@ function SettingsPage({ webhookEnabled, role }) {
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>РљРѕРјР°РЅРґР°</strong>
-            <p>Р РѕР»Рё СѓР¶Рµ СЂР°Р·РІРµРґРµРЅС‹ РЅР° РґРёСЂРµРєС‚РѕСЂР°, РјРµРЅРµРґР¶РµСЂР° Рё РјР°СЃС‚РµСЂР°. РЎР»РµРґСѓСЋС‰РёР№ СЃР»РѕР№ вЂ” РѕС‚РґРµР»СЊРЅС‹Рµ СЂРµР°Р»СЊРЅС‹Рµ Р°РєРєР°СѓРЅС‚С‹ РЅР° РґРµРјРѕ Рё РїСЂРѕРґР°Р¶Сѓ.</p>
+            <strong>Команда</strong>
+            <p>Роли уже разведены на директора, менеджера и мастера. Следующий слой — отдельные реальные аккаунты на демо и продажу.</p>
           </article>
         </div>
       );
@@ -1669,8 +1669,8 @@ function SettingsPage({ webhookEnabled, role }) {
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>РўР°СЂРёС„</strong>
-            <p>РЎРµР№С‡Р°СЃ СЌС‚Рѕ MVP-СЃР»РѕР№. РџРѕРґРїРёСЃРѕС‡РЅР°СЏ SaaS-РјРѕРґРµР»СЊ Р·Р°РєСЂРµРїР»РµРЅР° РІ roadmap Рё Р±СѓРґРµС‚ РІС‹РЅРµСЃРµРЅР° РїРѕСЃР»Рµ СЃС‚Р°Р±РёР»РёР·Р°С†РёРё onboarding Рё UX.</p>
+            <strong>Тариф</strong>
+            <p>Сейчас это MVP-слой. Подписочная SaaS-модель закреплена в roadmap и будет вынесена после стабилизации onboarding и UX.</p>
           </article>
         </div>
       );
@@ -1680,16 +1680,16 @@ function SettingsPage({ webhookEnabled, role }) {
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>РђРІС‚РѕРјР°С‚РёР·Р°С†РёСЏ</strong>
+            <strong>Автоматизация</strong>
             <p>
               {webhookEnabled
-                ? "Р’РЅРµС€РЅРёР№ webhook Р°РІС‚РѕРјР°С‚РёР·Р°С†РёРё РІРєР»СЋС‡С‘РЅ. CRM РјРѕР¶РµС‚ РѕС‚РїСЂР°РІР»СЏС‚СЊ СЃРѕР±С‹С‚РёСЏ РІ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Р№ automation-layer."
-                : "Р’РЅРµС€РЅРёР№ webhook РЅРµ РѕР±СЏР·Р°С‚РµР»РµРЅ. РћСЃРЅРѕРІРЅС‹Рµ СѓРІРµРґРѕРјР»РµРЅРёСЏ Рё РЅР°РїРѕРјРёРЅР°РЅРёСЏ СѓР¶Рµ РїРµСЂРµРІРµРґРµРЅС‹ РЅР° Supabase Edge Functions."}
+                ? "Внешний webhook автоматизации включён. CRM может отправлять события в дополнительный automation-layer."
+                : "Внешний webhook не обязателен. Основные уведомления и напоминания уже переведены на Supabase Edge Functions."}
             </p>
           </article>
           <article className="settings-form-card">
             <strong>Telegram</strong>
-            <p>РћРїРѕРІРµС‰РµРЅРёСЏ РїРѕ РЅРѕРІС‹Рј Р·Р°СЏРІРєР°Рј, follow-up Рё daily digest СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚ С‡РµСЂРµР· РЅР°С‚РёРІРЅС‹Рµ Edge Functions РїСЂРѕРµРєС‚Р°.</p>
+            <p>Оповещения по новым заявкам, follow-up и daily digest уже работают через нативные Edge Functions проекта.</p>
           </article>
         </div>
       );
@@ -1698,8 +1698,8 @@ function SettingsPage({ webhookEnabled, role }) {
     return (
       <div className="settings-panel-stack">
         <article className="settings-form-card">
-          <strong>Р‘РµР·РѕРїР°СЃРЅРѕСЃС‚СЊ</strong>
-          <p>RLS, rate limiting РґР»СЏ public request Рё server-side Zod validation СѓР¶Рµ РІРЅРµРґСЂРµРЅС‹ Рё РїСЂРѕРІРµСЂРµРЅС‹ live.</p>
+          <strong>Безопасность</strong>
+          <p>RLS, rate limiting для public request и server-side Zod validation уже внедрены и проверены live.</p>
         </article>
       </div>
     );
@@ -1709,8 +1709,8 @@ function SettingsPage({ webhookEnabled, role }) {
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>РќР°СЃС‚СЂРѕР№РєРё</h1>
-          <p>Р‘Р»РѕРє РєРѕРЅС„РёРіСѓСЂР°С†РёРё CRM, РєРѕРјР°РЅРґС‹, РёРЅС‚РµРіСЂР°С†РёР№ Рё РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё.</p>
+          <h1>Настройки</h1>
+          <p>Блок конфигурации CRM, команды, интеграций и операционной безопасности.</p>
         </div>
       </div>
 
@@ -1843,14 +1843,14 @@ function LiveSettingsPage({
       return (
         <div className="settings-panel-stack">
           <article className="settings-form-card">
-            <strong>Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ</strong>
+            <strong>РџСЂРѕС„РёР»СЊ</strong>
             <form className="settings-edit-form" onSubmit={handleProfileSubmit}>
               <label>
-                Р ВР СРЎРЏ Р Р† CRM
+                РРјСЏ РІ CRM
                 <input
                   value={profileForm.full_name}
                   onChange={(event) => setProfileForm((current) => ({ ...current, full_name: event.target.value }))}
-                  placeholder="Р ВР СРЎРЏ Р Р†Р В»Р В°Р Т‘Р ВµР В»РЎРЉРЎвЂ Р В° Р С‘Р В»Р С‘ Р СР ВµР Р…Р ВµР Т‘Р В¶Р ВµРЎР‚Р В°"
+                  placeholder="РРјСЏ РІР»Р°РґРµР»СЊС†Р° РёР»Рё РјРµРЅРµРґР¶РµСЂР°"
                 />
               </label>
               <label>
@@ -1858,13 +1858,13 @@ function LiveSettingsPage({
                 <input
                   value={profileForm.telegram_chat_id}
                   onChange={(event) => setProfileForm((current) => ({ ...current, telegram_chat_id: event.target.value }))}
-                  placeholder="Р вЂќР В»РЎРЏ Р В»Р С‘РЎвЂЎР Р…РЎвЂ№РЎвЂ¦ РЎС“Р Р†Р ВµР Т‘Р С•Р СР В»Р ВµР Р…Р С‘Р в„–"
+                  placeholder="Р”Р»СЏ Р»РёС‡РЅС‹С… СѓРІРµРґРѕРјР»РµРЅРёР№"
                 />
               </label>
               <div className="settings-action-row">
-                <span className="hint-text">Р ВўР ВµР С”РЎС“РЎвЂ°Р В°РЎРЏ РЎР‚Р С•Р В»РЎРЉ: {roleLabels[role] || roleLabels.manager}</span>
+                <span className="hint-text">Р¢РµРєСѓС‰Р°СЏ СЂРѕР»СЊ: {roleLabels[role] || roleLabels.manager}</span>
                 <button type="submit" className="button button-primary" disabled={profileSaving}>
-                  {profileSaving ? "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…РЎРЏР ВµР С..." : "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ"}
+                  {profileSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ"}
                 </button>
               </div>
             </form>
@@ -1879,8 +1879,8 @@ function LiveSettingsPage({
           <article className="settings-form-card">
             <div className="settings-toolbar-card">
               <div>
-                <strong>Р С™Р С•Р СР В°Р Р…Р Т‘Р В°</strong>
-                <p>Р СљР ВµР Р…РЎРЏР в„–РЎвЂљР Вµ Р С‘Р СРЎРЏ, РЎР‚Р С•Р В»РЎРЉ Р С‘ Telegram Р Т‘Р В»РЎРЏ owner, manager Р С‘ detailer.</p>
+                <strong>РљРѕРјР°РЅРґР°</strong>
+                <p>РњРµРЅСЏР№С‚Рµ РёРјСЏ, СЂРѕР»СЊ Рё Telegram РґР»СЏ owner, manager Рё detailer.</p>
               </div>
             </div>
             <div className="service-grid settings-service-grid">
@@ -1894,12 +1894,12 @@ function LiveSettingsPage({
                 return (
                   <article key={member.id} className="service-card">
                     <div className="service-card-head">
-                      <strong>{member.full_name || member.email || "Р Р€РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С”"}</strong>
-                      <span>{member.email || "Р вЂР ВµР В· email"}</span>
+                      <strong>{member.full_name || member.email || "РЈС‡Р°СЃС‚РЅРёРє"}</strong>
+                      <span>{member.email || "Р‘РµР· email"}</span>
                     </div>
                     <div className="settings-edit-form">
                       <label>
-                        Р ВР СРЎРЏ
+                        РРјСЏ
                         <input
                           value={draft.full_name}
                           onChange={(event) =>
@@ -1911,7 +1911,7 @@ function LiveSettingsPage({
                         />
                       </label>
                       <label>
-                        Р В Р С•Р В»РЎРЉ
+                        Р РѕР»СЊ
                         <select
                           value={draft.role}
                           onChange={(event) =>
@@ -1947,7 +1947,7 @@ function LiveSettingsPage({
                           disabled={teamSaving}
                           onClick={() => onUpdateTeamMember(member.id, draft)}
                         >
-                          {teamSaving ? "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…РЎРЏР ВµР С..." : "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ"}
+                          {teamSaving ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ"}
                         </button>
                         {profile?.id !== member.id ? (
                           <button
@@ -1956,7 +1956,7 @@ function LiveSettingsPage({
                             disabled={teamSaving}
                             onClick={() => onDeleteTeamMember(member.id)}
                           >
-                            Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ
+                            РЈРґР°Р»РёС‚СЊ
                           </button>
                         ) : null}
                       </div>
@@ -1968,10 +1968,10 @@ function LiveSettingsPage({
           </article>
 
           <article className="settings-form-card">
-            <strong>Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С”Р В°</strong>
+            <strong>Р”РѕР±Р°РІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°</strong>
             <form className="settings-edit-form" onSubmit={handleCreateTeamMember}>
               <label>
-                Р ВР СРЎРЏ
+                РРјСЏ
                 <input
                   value={newTeamMember.full_name}
                   onChange={(event) => setNewTeamMember((current) => ({ ...current, full_name: event.target.value }))}
@@ -1986,7 +1986,7 @@ function LiveSettingsPage({
                 />
               </label>
               <label>
-                Р вЂ™РЎР‚Р ВµР СР ВµР Р…Р Р…РЎвЂ№Р в„– Р С—Р В°РЎР‚Р С•Р В»РЎРЉ
+                Р’СЂРµРјРµРЅРЅС‹Р№ РїР°СЂРѕР»СЊ
                 <input
                   type="password"
                   value={newTeamMember.password}
@@ -1994,7 +1994,7 @@ function LiveSettingsPage({
                 />
               </label>
               <label>
-                Р В Р С•Р В»РЎРЉ
+                Р РѕР»СЊ
                 <select
                   value={newTeamMember.role}
                   onChange={(event) => setNewTeamMember((current) => ({ ...current, role: event.target.value }))}
@@ -2014,7 +2014,7 @@ function LiveSettingsPage({
                 />
               </label>
               <button type="submit" className="button button-primary" disabled={creatingTeamMember}>
-                {creatingTeamMember ? "Р РЋР С•Р В·Р Т‘Р В°РЎвЂР С..." : "Р РЋР С•Р В·Р Т‘Р В°РЎвЂљРЎРЉ Р В°Р С”Р С”Р В°РЎС“Р Р…РЎвЂљ"}
+                {creatingTeamMember ? "РЎРѕР·РґР°С‘Рј..." : "РЎРѕР·РґР°С‚СЊ Р°РєРєР°СѓРЅС‚"}
               </button>
             </form>
           </article>
@@ -2028,17 +2028,17 @@ function LiveSettingsPage({
           <article className="settings-form-card">
             <div className="settings-toolbar-card">
               <div>
-                <strong>Р вЂќР ВµР СР С•-Р С—РЎР‚Р В°Р в„–РЎРѓ</strong>
-                <p>Р СџР С•Р Т‘РЎвЂљРЎРЏР С–Р С‘Р Р†Р В°Р ВµР С РЎР‚Р ВµР В°Р В»Р С‘РЎРѓРЎвЂљР С‘РЎвЂЎР Р…РЎвЂ№Р Вµ РЎвЂ Р ВµР Р…РЎвЂ№ Р С‘ Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° РЎС“РЎРѓР В»РЎС“Р С–Р С‘, РЎвЂЎРЎвЂљР С•Р В±РЎвЂ№ Р С—Р С•Р С”Р В°Р В·Р В°РЎвЂљРЎРЉ Р С”Р В°РЎРѓРЎРѓРЎС“ Р С‘ РЎРѓРЎР‚Р ВµР Т‘Р Р…Р С‘Р в„– РЎвЂЎР ВµР С” Р В·Р В° Р СР ВµРЎРѓРЎРЏРЎвЂ .</p>
+                <strong>Р”РµРјРѕ-РїСЂР°Р№СЃ</strong>
+                <p>РџРѕРґС‚СЏРіРёРІР°РµРј СЂРµР°Р»РёСЃС‚РёС‡РЅС‹Рµ С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё, С‡С‚РѕР±С‹ РїРѕРєР°Р·Р°С‚СЊ РєР°СЃСЃСѓ Рё СЃСЂРµРґРЅРёР№ С‡РµРє Р·Р° РјРµСЃСЏС†.</p>
               </div>
               <button type="button" className="button button-primary" disabled={applyingDemoPricing} onClick={onApplyDemoPricing}>
-                {applyingDemoPricing ? "Р С›Р В±Р Р…Р С•Р Р†Р В»РЎРЏР ВµР С..." : "Р вЂ”Р В°Р С–РЎР‚РЎС“Р В·Р С‘РЎвЂљРЎРЉ Р Т‘Р ВµР СР С•-РЎвЂ Р ВµР Р…РЎвЂ№"}
+                {applyingDemoPricing ? "РћР±РЅРѕРІР»СЏРµРј..." : "Р—Р°РіСЂСѓР·РёС‚СЊ РґРµРјРѕ-С†РµРЅС‹"}
               </button>
             </div>
           </article>
 
           <article className="settings-form-card">
-            <strong>Р Р€РЎРѓР В»РЎС“Р С–Р С‘</strong>
+            <strong>РЈСЃР»СѓРіРё</strong>
             <div className="service-grid settings-service-grid">
               {(services || []).map((service) => {
                 const draft = draftServices[service.id] || {
@@ -2052,7 +2052,7 @@ function LiveSettingsPage({
                   <article key={service.id} className="service-card">
                     <div className="settings-edit-form">
                       <label>
-                        Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ
+                        РќР°Р·РІР°РЅРёРµ
                         <input
                           value={draft.name}
                           onChange={(event) =>
@@ -2064,7 +2064,7 @@ function LiveSettingsPage({
                         />
                       </label>
                       <label>
-                        Р В¦Р ВµР Р…Р В° (MDL)
+                        Р¦РµРЅР° (MDL)
                         <input
                           type="number"
                           min="0"
@@ -2078,7 +2078,7 @@ function LiveSettingsPage({
                         />
                       </label>
                       <label>
-                        Р вЂќР В»Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ (Р СР С‘Р Р…)
+                        Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
                         <input
                           type="number"
                           min="0"
@@ -2102,7 +2102,7 @@ function LiveSettingsPage({
                             }))
                           }
                         />
-                        <span>Р С’Р С”РЎвЂљР С‘Р Р†Р Р…Р В°РЎРЏ РЎС“РЎРѓР В»РЎС“Р С–Р В°</span>
+                        <span>РђРєС‚РёРІРЅР°СЏ СѓСЃР»СѓРіР°</span>
                       </label>
                       <button
                         type="button"
@@ -2110,7 +2110,7 @@ function LiveSettingsPage({
                         disabled={serviceSavingId === service.id}
                         onClick={() => onUpdateService(service.id, draft)}
                       >
-                        {serviceSavingId === service.id ? "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…РЎРЏР ВµР С..." : "Р РЋР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ РЎС“РЎРѓР В»РЎС“Р С–РЎС“"}
+                        {serviceSavingId === service.id ? "РЎРѕС…СЂР°РЅСЏРµРј..." : "РЎРѕС…СЂР°РЅРёС‚СЊ СѓСЃР»СѓРіСѓ"}
                       </button>
                     </div>
                   </article>
@@ -2120,14 +2120,14 @@ function LiveSettingsPage({
           </article>
 
           <article className="settings-form-card">
-            <strong>Р СњР С•Р Р†Р В°РЎРЏ РЎС“РЎРѓР В»РЎС“Р С–Р В°</strong>
+            <strong>РќРѕРІР°СЏ СѓСЃР»СѓРіР°</strong>
             <form className="settings-edit-form" onSubmit={handleCreateService}>
               <label>
-                Р СњР В°Р В·Р Р†Р В°Р Р…Р С‘Р Вµ
+                РќР°Р·РІР°РЅРёРµ
                 <input value={newService.name} onChange={(event) => setNewService((current) => ({ ...current, name: event.target.value }))} />
               </label>
               <label>
-                Р В¦Р ВµР Р…Р В° (MDL)
+                Р¦РµРЅР° (MDL)
                 <input
                   type="number"
                   min="0"
@@ -2136,7 +2136,7 @@ function LiveSettingsPage({
                 />
               </label>
               <label>
-                Р вЂќР В»Р С‘РЎвЂљР ВµР В»РЎРЉР Р…Р С•РЎРѓРЎвЂљРЎРЉ (Р СР С‘Р Р…)
+                Р”Р»РёС‚РµР»СЊРЅРѕСЃС‚СЊ (РјРёРЅ)
                 <input
                   type="number"
                   min="0"
@@ -2150,10 +2150,10 @@ function LiveSettingsPage({
                   checked={newService.is_active}
                   onChange={(event) => setNewService((current) => ({ ...current, is_active: event.target.checked }))}
                 />
-                <span>Р РЋРЎР‚Р В°Р В·РЎС“ Р В°Р С”РЎвЂљР С‘Р Р†Р С‘РЎР‚Р С•Р Р†Р В°РЎвЂљРЎРЉ</span>
+                <span>РЎСЂР°Р·Сѓ Р°РєС‚РёРІРёСЂРѕРІР°С‚СЊ</span>
               </label>
               <button type="submit" className="button button-primary" disabled={creatingService}>
-                {creatingService ? "Р РЋР С•Р В·Р Т‘Р В°РЎвЂР С..." : "Р вЂќР С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎС“РЎРѓР В»РЎС“Р С–РЎС“"}
+                {creatingService ? "РЎРѕР·РґР°С‘Рј..." : "Р”РѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ"}
               </button>
             </form>
           </article>
@@ -2168,13 +2168,13 @@ function LiveSettingsPage({
             <strong>Webhook automation</strong>
             <p>
               {webhookEnabled
-                ? "Р вЂ™Р Р…Р ВµРЎв‚¬Р Р…Р С‘Р в„– webhook Р Р†Р С”Р В»РЎР‹РЎвЂЎРЎвЂР Р…. CRM Р С•РЎвЂљР С—РЎР‚Р В°Р Р†Р В»РЎРЏР ВµРЎвЂљ РЎРѓР С•Р В±РЎвЂ№РЎвЂљР С‘РЎРЏ Р С—Р С• Р В·Р В°РЎРЏР Р†Р С”Р В°Р С Р Р† automation-layer."
-                : "Webhook Р Р…Р Вµ Р Р…Р В°РЎРѓРЎвЂљРЎР‚Р С•Р ВµР Р…. Р С›РЎРѓР Р…Р С•Р Р†Р Р…Р С•Р в„– follow-up Р С‘ Telegram live-Р С•Р С—Р С•Р Р†Р ВµРЎвЂ°Р ВµР Р…Р С‘РЎРЏ Р С•РЎРѓРЎвЂљР В°РЎР‹РЎвЂљРЎРѓРЎРЏ Р Р…Р В° Supabase Edge Functions."}
+                ? "Р’РЅРµС€РЅРёР№ webhook РІРєР»СЋС‡С‘РЅ. CRM РѕС‚РїСЂР°РІР»СЏРµС‚ СЃРѕР±С‹С‚РёСЏ РїРѕ Р·Р°СЏРІРєР°Рј РІ automation-layer."
+                : "Webhook РЅРµ РЅР°СЃС‚СЂРѕРµРЅ. РћСЃРЅРѕРІРЅРѕР№ follow-up Рё Telegram live-РѕРїРѕРІРµС‰РµРЅРёСЏ РѕСЃС‚Р°СЋС‚СЃСЏ РЅР° Supabase Edge Functions."}
             </p>
           </article>
           <article className="settings-form-card">
             <strong>Telegram</strong>
-            <p>Chat id Р СР ВµР Р…Р ВµР Т‘Р В¶Р ВµРЎР‚Р С•Р Р†: {managerProfiles.length ? managerProfiles.map((member) => member.telegram_chat_id || "Р Р…Р Вµ РЎС“Р С”Р В°Р В·Р В°Р Р…").join(", ") : "Р С—Р С•Р С”Р В° Р Р…Р ВµРЎвЂљ"}.</p>
+            <p>Chat id РјРµРЅРµРґР¶РµСЂРѕРІ: {managerProfiles.length ? managerProfiles.map((member) => member.telegram_chat_id || "РЅРµ СѓРєР°Р·Р°РЅ").join(", ") : "РїРѕРєР° РЅРµС‚"}.</p>
           </article>
         </div>
       );
@@ -2183,10 +2183,10 @@ function LiveSettingsPage({
     return (
       <div className="settings-panel-stack">
         <article className="settings-form-card">
-          <strong>Р РЋР СР ВµР Р…Р В° Р С—Р В°РЎР‚Р С•Р В»РЎРЏ</strong>
+          <strong>РЎРјРµРЅР° РїР°СЂРѕР»СЏ</strong>
           <form className="settings-edit-form" onSubmit={handlePasswordSubmit}>
             <label>
-              Р СњР С•Р Р†РЎвЂ№Р в„– Р С—Р В°РЎР‚Р С•Р В»РЎРЉ
+              РќРѕРІС‹Р№ РїР°СЂРѕР»СЊ
               <input
                 type="password"
                 value={passwordForm.next}
@@ -2194,7 +2194,7 @@ function LiveSettingsPage({
               />
             </label>
             <label>
-              Р СџР С•Р Р†РЎвЂљР С•РЎР‚Р С‘РЎвЂљР Вµ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ
+              РџРѕРІС‚РѕСЂРёС‚Рµ РїР°СЂРѕР»СЊ
               <input
                 type="password"
                 value={passwordForm.confirm}
@@ -2206,7 +2206,7 @@ function LiveSettingsPage({
               className="button button-primary"
               disabled={passwordSaving || !passwordForm.next || passwordForm.next !== passwordForm.confirm}
             >
-              {passwordSaving ? "Р С›Р В±Р Р…Р С•Р Р†Р В»РЎРЏР ВµР С..." : "Р РЋР СР ВµР Р…Р С‘РЎвЂљРЎРЉ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ"}
+              {passwordSaving ? "РћР±РЅРѕРІР»СЏРµРј..." : "РЎРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ"}
             </button>
           </form>
         </article>
@@ -2218,8 +2218,8 @@ function LiveSettingsPage({
     <section className="page-stack">
       <div className="page-header">
         <div>
-          <h1>Р СњР В°РЎРѓРЎвЂљРЎР‚Р С•Р в„–Р С”Р С‘</h1>
-          <p>Р вЂР В»Р С•Р С” Р С”Р С•Р Р…РЎвЂћР С‘Р С–РЎС“РЎР‚Р В°РЎвЂ Р С‘Р С‘ CRM, Р С”Р С•Р СР В°Р Р…Р Т‘РЎвЂ№, Р С‘Р Р…РЎвЂљР ВµР С–РЎР‚Р В°РЎвЂ Р С‘Р в„– Р С‘ Р С•Р С—Р ВµРЎР‚Р В°РЎвЂ Р С‘Р С•Р Р…Р Р…Р С•Р в„– Р В±Р ВµР В·Р С•Р С—Р В°РЎРѓР Р…Р С•РЎРѓРЎвЂљР С‘.</p>
+          <h1>РќР°СЃС‚СЂРѕР№РєРё</h1>
+          <p>Р‘Р»РѕРє РєРѕРЅС„РёРіСѓСЂР°С†РёРё CRM, РєРѕРјР°РЅРґС‹, РёРЅС‚РµРіСЂР°С†РёР№ Рё РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ Р±РµР·РѕРїР°СЃРЅРѕСЃС‚Рё.</p>
         </div>
       </div>
 
@@ -2339,7 +2339,7 @@ function ProtectedApp({ session, onSignOut }) {
       setTeamProfiles(teamProfilesData || []);
       setSelectedLeadId((current) => preferredLeadId || current || leadsData?.[0]?.id || null);
     } catch (loadError) {
-      setError(loadError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ РґР°РЅРЅС‹Рµ.");
+      setError(loadError.message || "Не удалось загрузить данные.");
     } finally {
       setLoading(false);
     }
@@ -2379,7 +2379,7 @@ function ProtectedApp({ session, onSignOut }) {
       await createTimelineEvent({
         lead_id: createdLead.id,
         type: "created",
-        note: `Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР° РёР· РёСЃС‚РѕС‡РЅРёРєР° ${formatLabel(form.source)}`,
+        note: `Заявка создана из источника ${formatLabel(form.source)}`,
         payload: {
           source: form.source,
           service_id: createdLead.service_id,
@@ -2407,13 +2407,13 @@ function ProtectedApp({ session, onSignOut }) {
           client: clientRecord
         });
       } catch (webhookError) {
-        setError(webhookError.message || "Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР°, РЅРѕ РІРЅРµС€РЅРёР№ automation webhook РЅРµ РѕС‚СЂР°Р±РѕС‚Р°Р».");
+        setError(webhookError.message || "Заявка создана, но внешний automation webhook не отработал.");
       }
 
-      setSaveMessage(reused ? "Р—Р°СЏРІРєР° СЃРѕР·РґР°РЅР°, СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ РєР»РёРµРЅС‚ РѕР±РЅРѕРІР»С‘РЅ." : "Р—Р°СЏРІРєР° СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅР°.");
+      setSaveMessage(reused ? "Заявка создана, существующий клиент обновлён." : "Заявка успешно создана.");
       return true;
     } catch (createError) {
-      setError(createError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ Р·Р°СЏРІРєСѓ.");
+      setError(createError.message || "Не удалось создать заявку.");
       return false;
     } finally {
       setCreatingLead(false);
@@ -2438,21 +2438,21 @@ function ProtectedApp({ session, onSignOut }) {
 
       if (updateError) {
         setLeads(previousLeads);
-        setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ Р·Р°СЏРІРєСѓ.");
+        setError(updateError.message || "Не удалось обновить заявку.");
         return;
       }
 
       await createTimelineEvent({
         lead_id: leadId,
         type: "status_changed",
-        note: `РЎС‚Р°С‚СѓСЃ РёР·РјРµРЅС‘РЅ СЃ "${statusLabels[previousLead.status] || previousLead.status}" РЅР° "${statusLabels[nextStatus] || nextStatus}"`,
+        note: `Статус изменён с "${statusLabels[previousLead.status] || previousLead.status}" на "${statusLabels[nextStatus] || nextStatus}"`,
         payload: {
           from: previousLead.status,
           to: nextStatus
         },
         created_by: session.user.id
       });
-      setSaveMessage(`РЎС‚Р°С‚СѓСЃ РѕР±РЅРѕРІР»С‘РЅ: ${statusLabels[nextStatus] || nextStatus}.`);
+      setSaveMessage(`Статус обновлён: ${statusLabels[nextStatus] || nextStatus}.`);
     } finally {
       setStatusSavingId(null);
     }
@@ -2483,14 +2483,14 @@ function ProtectedApp({ session, onSignOut }) {
 
     if (updateError) {
       setLeads(previousLeads);
-      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ follow-up.");
+      setError(updateError.message || "Не удалось обновить follow-up.");
       return false;
     }
 
     await createTimelineEvent({
       lead_id: lead.id,
       type: "follow_up_set",
-      note: nextFollowUpAt ? `Follow-up РЅР°Р·РЅР°С‡РµРЅ РЅР° ${formatDate(nextFollowUpAt)}` : "Follow-up РѕС‡РёС‰РµРЅ",
+      note: nextFollowUpAt ? `Follow-up назначен на ${formatDate(nextFollowUpAt)}` : "Follow-up очищен",
       payload: {
         follow_up_at: nextFollowUpAt
       },
@@ -2506,10 +2506,10 @@ function ProtectedApp({ session, onSignOut }) {
         }
       });
     } catch (webhookError) {
-      setError(webhookError.message || "Follow-up РѕР±РЅРѕРІР»С‘РЅ, РЅРѕ РІРЅРµС€РЅРёР№ automation webhook РЅРµ РѕС‚СЂР°Р±РѕС‚Р°Р».");
+      setError(webhookError.message || "Follow-up обновлён, но внешний automation webhook не отработал.");
     }
 
-    setSaveMessage(nextFollowUpAt ? "Follow-up СЃРѕС…СЂР°РЅС‘РЅ." : "Follow-up РѕС‡РёС‰РµРЅ.");
+    setSaveMessage(nextFollowUpAt ? "Follow-up сохранён." : "Follow-up очищен.");
     return true;
   }
 
@@ -2520,7 +2520,7 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: noteError } = await addLeadNoteRecord(supabase, leadId, note, session.user.id);
 
     if (noteError) {
-      setError(noteError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РґРѕР±Р°РІРёС‚СЊ Р·Р°РјРµС‚РєСѓ.");
+      setError(noteError.message || "Не удалось добавить заметку.");
       return false;
     }
 
@@ -2528,7 +2528,7 @@ function ProtectedApp({ session, onSignOut }) {
       setLeadEvents((current) => [data, ...current]);
     }
 
-    setSaveMessage("Р—Р°РјРµС‚РєР° РґРѕР±Р°РІР»РµРЅР°.");
+    setSaveMessage("Заметка добавлена.");
     return true;
   }
 
@@ -2545,14 +2545,14 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", session.user.id).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎРѓР С•РЎвЂ¦РЎР‚Р В°Р Р…Р С‘РЎвЂљРЎРЉ Р С—РЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ.");
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ.");
       setProfileSaving(false);
       return false;
     }
 
     setProfile(data || null);
     setTeamProfiles((current) => current.map((member) => (member.id === session.user.id ? { ...member, ...payload } : member)));
-    setSaveMessage("Р СџРЎР‚Р С•РЎвЂћР С‘Р В»РЎРЉ Р С•Р В±Р Р…Р С•Р Р†Р В»РЎвЂР Р….");
+    setSaveMessage("РџСЂРѕС„РёР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
     setProfileSaving(false);
     return true;
   }
@@ -2571,7 +2571,7 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", memberId).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р С•Р В±Р Р…Р С•Р Р†Р С‘РЎвЂљРЎРЉ РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С”Р В°.");
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
       setTeamSaving(false);
       return false;
     }
@@ -2580,7 +2580,7 @@ function ProtectedApp({ session, onSignOut }) {
     if (memberId === session.user.id) {
       setProfile((current) => (current ? { ...current, ...data } : current));
     }
-    setSaveMessage("Р С™Р С•Р СР В°Р Р…Р Т‘Р В° Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р В°.");
+    setSaveMessage("РљРѕРјР°РЅРґР° РѕР±РЅРѕРІР»РµРЅР°.");
     setTeamSaving(false);
     return true;
   }
@@ -2593,13 +2593,13 @@ function ProtectedApp({ session, onSignOut }) {
     const { error: deleteError } = await supabase.from("profiles").delete().eq("id", memberId);
 
     if (deleteError) {
-      setError(deleteError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎС“Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С”Р В°.");
+      setError(deleteError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
       setTeamSaving(false);
       return false;
     }
 
     setTeamProfiles((current) => current.filter((member) => member.id !== memberId));
-    setSaveMessage("Р Р€РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С” РЎС“Р Т‘Р В°Р В»РЎвЂР Р….");
+    setSaveMessage("РЈС‡Р°СЃС‚РЅРёРє СѓРґР°Р»С‘РЅ.");
     setTeamSaving(false);
     return true;
   }
@@ -2627,7 +2627,7 @@ function ProtectedApp({ session, onSignOut }) {
 
       const nextUserId = signUpData.user?.id;
       if (!nextUserId) {
-        throw new Error("Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р С—Р С•Р В»РЎС“РЎвЂЎР С‘РЎвЂљРЎРЉ id Р Р…Р С•Р Р†Р С•Р С–Р С• Р В°Р С”Р С”Р В°РЎС“Р Р…РЎвЂљР В°.");
+        throw new Error("РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ id РЅРѕРІРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.");
       }
 
       const payload = {
@@ -2651,10 +2651,10 @@ function ProtectedApp({ session, onSignOut }) {
         }
         return [...current, data || payload];
       });
-      setSaveMessage("Р СњР С•Р Р†РЎвЂ№Р в„– РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С” РЎРѓР С•Р В·Р Т‘Р В°Р Р….");
+      setSaveMessage("РќРѕРІС‹Р№ СѓС‡Р°СЃС‚РЅРёРє СЃРѕР·РґР°РЅ.");
       return true;
     } catch (createError) {
-      setError(createError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎРѓР С•Р В·Р Т‘Р В°РЎвЂљРЎРЉ РЎС“РЎвЂЎР В°РЎРѓРЎвЂљР Р…Р С‘Р С”Р В°.");
+      setError(createError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
       return false;
     } finally {
       setCreatingTeamMember(false);
@@ -2676,13 +2676,13 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("services").update(payload).eq("id", serviceId).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р С•Р В±Р Р…Р С•Р Р†Р С‘РЎвЂљРЎРЉ РЎС“РЎРѓР В»РЎС“Р С–РЎС“.");
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
       setServiceSavingId(null);
       return false;
     }
 
     setServices((current) => current.map((service) => (service.id === serviceId ? { ...service, ...data } : service)));
-    setSaveMessage("Р Р€РЎРѓР В»РЎС“Р С–Р В° Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…Р В°.");
+    setSaveMessage("РЈСЃР»СѓРіР° РѕР±РЅРѕРІР»РµРЅР°.");
     setServiceSavingId(null);
     return true;
   }
@@ -2702,13 +2702,13 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: insertError } = await supabase.from("services").insert(payload).select("*").maybeSingle();
 
     if (insertError) {
-      setError(insertError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р Т‘Р С•Р В±Р В°Р Р†Р С‘РЎвЂљРЎРЉ РЎС“РЎРѓР В»РЎС“Р С–РЎС“.");
+      setError(insertError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РґРѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
       setCreatingService(false);
       return false;
     }
 
     setServices((current) => [...current, data || payload].sort((a, b) => a.name.localeCompare(b.name)));
-    setSaveMessage("Р СњР С•Р Р†Р В°РЎРЏ РЎС“РЎРѓР В»РЎС“Р С–Р В° Р Т‘Р С•Р В±Р В°Р Р†Р В»Р ВµР Р…Р В°.");
+    setSaveMessage("РќРѕРІР°СЏ СѓСЃР»СѓРіР° РґРѕР±Р°РІР»РµРЅР°.");
     setCreatingService(false);
     return true;
   }
@@ -2747,10 +2747,10 @@ function ProtectedApp({ session, onSignOut }) {
       }
 
       await loadData(selectedLeadId);
-      setSaveMessage("Р вЂќР ВµР СР С•-РЎвЂ Р ВµР Р…РЎвЂ№ Р С‘ Р Р†РЎР‚Р ВµР СРЎРЏ Р Р…Р В° РЎС“РЎРѓР В»РЎС“Р С–Р С‘ Р С•Р В±Р Р…Р С•Р Р†Р В»Р ВµР Р…РЎвЂ№.");
+      setSaveMessage("Р”РµРјРѕ-С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё РѕР±РЅРѕРІР»РµРЅС‹.");
       return true;
     } catch (applyError) {
-      setError(applyError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ Р С—РЎР‚Р С‘Р СР ВµР Р…Р С‘РЎвЂљРЎРЉ Р Т‘Р ВµР СР С•-РЎвЂ Р ВµР Р…РЎвЂ№.");
+      setError(applyError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ РґРµРјРѕ-С†РµРЅС‹.");
       return false;
     } finally {
       setApplyingDemoPricing(false);
@@ -2765,12 +2765,12 @@ function ProtectedApp({ session, onSignOut }) {
     const { error: updateError } = await supabase.auth.updateUser({ password: nextPassword });
 
     if (updateError) {
-      setError(updateError.message || "Р СњР Вµ РЎС“Р Т‘Р В°Р В»Р С•РЎРѓРЎРЉ РЎРѓР СР ВµР Р…Р С‘РЎвЂљРЎРЉ Р С—Р В°РЎР‚Р С•Р В»РЎРЉ.");
+      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ.");
       setPasswordSaving(false);
       return false;
     }
 
-    setSaveMessage("Р СџР В°РЎР‚Р С•Р В»РЎРЉ Р С•Р В±Р Р…Р С•Р Р†Р В»РЎвЂР Р….");
+    setSaveMessage("РџР°СЂРѕР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
     setPasswordSaving(false);
     return true;
   }
@@ -2778,7 +2778,7 @@ function ProtectedApp({ session, onSignOut }) {
   async function handlePhoneAction(phone) {
     const normalized = normalizePhone(phone);
     if (!normalized) {
-      setError("Р Р€ Р С”Р В»Р С‘Р ВµР Р…РЎвЂљР В° Р Р…Р ВµРЎвЂљ Р Р…Р С•Р СР ВµРЎР‚Р В° РЎвЂљР ВµР В»Р ВµРЎвЂћР С•Р Р…Р В°.");
+      setError("РЈ РєР»РёРµРЅС‚Р° РЅРµС‚ РЅРѕРјРµСЂР° С‚РµР»РµС„РѕРЅР°.");
       return;
     }
 
@@ -2791,7 +2791,7 @@ function ProtectedApp({ session, onSignOut }) {
     }
 
     window.location.href = `tel:${normalized}`;
-    setSaveMessage(`Р СњР С•Р СР ВµРЎР‚ ${normalized} Р С—Р ВµРЎР‚Р ВµР Т‘Р В°Р Р… Р Р† РЎРѓР С‘РЎРѓРЎвЂљР ВµР СР Р…РЎвЂ№Р в„– Р Р…Р В°Р В±Р С•РЎР‚.`);
+    setSaveMessage(`РќРѕРјРµСЂ ${normalized} РїРµСЂРµРґР°РЅ РІ СЃРёСЃС‚РµРјРЅС‹Р№ РЅР°Р±РѕСЂ.`);
   }
 
   useEffect(() => {
@@ -2840,7 +2840,7 @@ function ProtectedApp({ session, onSignOut }) {
     const monthAverageTicket = monthClosedLeads ? monthRevenue / monthClosedLeads : 0;
     const monthServiceRevenue = Object.values(
       monthDoneLeads.reduce((accumulator, lead) => {
-        const key = lead.services?.name || "Р вЂР ВµР В· РЎС“РЎРѓР В»РЎС“Р С–Р С‘";
+        const key = lead.services?.name || "Р‘РµР· СѓСЃР»СѓРіРё";
         if (!accumulator[key]) {
           accumulator[key] = { name: key, count: 0, total: 0 };
         }
@@ -2856,11 +2856,11 @@ function ProtectedApp({ session, onSignOut }) {
   const defaultRoute = permissions.nav[0] || "/dashboard";
   const leadsEmptyMessage =
     role === "detailer"
-      ? "РќР°Р·РЅР°С‡РµРЅРЅС‹С… Р·Р°СЏРІРѕРє РїРѕРєР° РЅРµС‚. РљР°Рє С‚РѕР»СЊРєРѕ РјРµРЅРµРґР¶РµСЂ РЅР°Р·РЅР°С‡РёС‚ СЂР°Р±РѕС‚Сѓ, РѕРЅР° РїРѕСЏРІРёС‚СЃСЏ Р·РґРµСЃСЊ."
-      : "РџРѕРєР° РЅРµС‚ Р·Р°СЏРІРѕРє. РЎРѕР·РґР°Р№С‚Рµ РїРµСЂРІСѓСЋ, Рё pipeline Р·Р°РїРѕР»РЅРёС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.";
+      ? "Назначенных заявок пока нет. Как только менеджер назначит работу, она появится здесь."
+      : "Пока нет заявок. Создайте первую, и pipeline заполнится автоматически.";
 
   if (loading) {
-    return <div className="loading-screen">Р—Р°РіСЂСѓР¶Р°РµРј CRM...</div>;
+    return <div className="loading-screen">Загружаем CRM...</div>;
   }
 
   return (
@@ -2980,7 +2980,7 @@ export default function App() {
   }
 
   if (booting && !isPublicRequestRoute) {
-    return <div className="loading-screen">РџРѕРґРіРѕС‚Р°РІР»РёРІР°РµРј СЂР°Р±РѕС‡РµРµ РїСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ...</div>;
+    return <div className="loading-screen">Подготавливаем рабочее пространство...</div>;
   }
 
   if (isPublicRequestRoute) {
