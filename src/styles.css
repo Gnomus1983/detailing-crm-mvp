@@ -321,6 +321,46 @@ textarea {
   justify-content: flex-end;
 }
 
+.auth-side-media {
+  position: relative;
+  overflow: hidden;
+  border-radius: 28px;
+  min-height: 320px;
+  box-shadow: 0 24px 48px rgba(4, 12, 24, 0.28);
+}
+
+.auth-side-image {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  object-fit: cover;
+  display: block;
+}
+
+.auth-side-overlay {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  gap: 8px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(7, 18, 30, 0.16) 0%, rgba(7, 18, 30, 0.82) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.auth-side-overlay strong {
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+}
+
+.auth-side-overlay span {
+  color: var(--color-text-inverse-soft);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .auth-side-quote {
   align-self: end;
   max-width: 28rem;
@@ -381,6 +421,48 @@ textarea {
   min-height: 320px;
   max-height: 420px;
   object-fit: cover;
+}
+
+.public-form-showcase {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+  border-radius: 26px;
+  min-height: 260px;
+  box-shadow: 0 22px 40px rgba(4, 12, 24, 0.14);
+}
+
+.public-form-showcase-image {
+  display: block;
+  width: 100%;
+  height: 260px;
+  object-fit: cover;
+}
+
+.public-form-showcase-copy {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(8, 18, 30, 0.1) 0%, rgba(8, 18, 30, 0.82) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.public-form-showcase-copy strong {
+  color: var(--color-text-inverse);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.92rem;
+}
+
+.public-form-showcase-copy span {
+  color: var(--color-text-inverse-soft);
+  font-size: 0.88rem;
+  line-height: 1.5;
 }
 
 .crm-shell {

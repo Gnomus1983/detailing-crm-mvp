@@ -302,6 +302,8 @@ function LogoWordmark({ inverse = false }) {
 }
 
 function LoginPage({ onAuthenticated }) {
+  const loginShowcaseImage =
+    "https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=1200&q=80";
   const [mode, setMode] = useState("sign-in");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -333,7 +335,7 @@ function LoginPage({ onAuthenticated }) {
           throw signUpError;
         }
 
-        setMessage("Аккаунт создан. Если у проекта включено подтверждение почты, подтвердите email и затем войдите.");
+        setMessage("Аккаунт создан. Если в проекте включено подтверждение почты, подтвердите email и затем войдите.");
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -375,7 +377,7 @@ function LoginPage({ onAuthenticated }) {
         throw oauthError;
       }
     } catch (submitError) {
-      setError(submitError.message || "�� ������� ���������� ����� Google.");
+      setError(submitError.message || "Не удалось продолжить через Google.");
       setGoogleLoading(false);
     }
   }
@@ -404,35 +406,18 @@ function LoginPage({ onAuthenticated }) {
             {mode === "sign-up" ? (
               <label>
                 Имя
-                <input
-                  value={fullName}
-                  onChange={(event) => setFullName(event.target.value)}
-                  placeholder="Имя владельца или менеджера"
-                  required
-                />
+                <input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Имя владельца или менеджера" required />
               </label>
             ) : null}
 
             <label>
               Email
-              <input
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@example.com"
-                required
-              />
+              <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required />
             </label>
 
             <label>
               Пароль
-              <input
-                type="password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                placeholder="Минимум 6 символов"
-                required
-              />
+              <input type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Минимум 6 символов" required />
             </label>
 
             <button type="submit" className="button button-primary button-full" disabled={loading}>
@@ -444,17 +429,8 @@ function LoginPage({ onAuthenticated }) {
             <span>или</span>
           </div>
 
-          <button
-            type="button"
-            className="button button-outline button-full"
-            onClick={handleGoogleAuth}
-            disabled={loading || googleLoading}
-          >
-            {googleLoading
-              ? "��������� � Google..."
-              : mode === "sign-up"
-                ? "������������������ ����� Google"
-                : "����� ����� Google"}
+          <button type="button" className="button button-outline button-full" onClick={handleGoogleAuth} disabled={loading || googleLoading}>
+            {googleLoading ? "Подключаем Google..." : mode === "sign-up" ? "Продолжить с Google" : "Войти через Google"}
           </button>
 
           {message ? <p className="status-note success">{message}</p> : null}
@@ -465,10 +441,15 @@ function LoginPage({ onAuthenticated }) {
           <div className="auth-side-top">
             <LogoWordmark inverse />
           </div>
+          <div className="auth-side-media">
+            <img src={loginShowcaseImage} alt="Премиальный автомобиль после детейлинга" className="auth-side-image" />
+            <div className="auth-side-overlay">
+              <strong>DETAILING READY</strong>
+              <span>Чистый поток заявок, роли команды и follow-up в одной CRM.</span>
+            </div>
+          </div>
           <div className="auth-side-quote">
-            <p>
-              “Система наконец-то собрала заявки, follow-up и команду в одном месте. Стало понятно, кто ведёт клиента и что делать дальше.”
-            </p>
+            <p>“Система наконец-то собрала заявки, follow-up и команду в одном месте. Стало понятно, кто ведёт клиента и что делать дальше.”</p>
             <span>Юрий, владелец детейлинг-центра</span>
           </div>
         </aside>
@@ -476,6 +457,7 @@ function LoginPage({ onAuthenticated }) {
     </div>
   );
 }
+
 
 function PublicRequestPage({ isAuthenticated }) {
   const [services, setServices] = useState([]);
@@ -504,6 +486,8 @@ function PublicRequestPage({ isAuthenticated }) {
   const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
   const showcaseImage =
     "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80";
+  const requestFormImage =
+    "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80";
 
   useEffect(() => {
     let active = true;
@@ -607,7 +591,7 @@ function PublicRequestPage({ isAuthenticated }) {
           <span className="eyebrow">Онлайн-заявка</span>
           <h1>Запишитесь на детейлинг без звонков и ожидания.</h1>
           <p>
-            Оставьте контакт, услугу и удобный слот. CRM сразу создаст карточку клиента, заявку и follow-up для команды.
+            Оставьте заявку за минуту, а команда сразу увидит запрос, согласует удобное время и подготовит всё к вашему визиту без лишних звонков.
           </p>
           <div className="public-pill-row">
             <span>Быстрый контакт</span>
@@ -617,10 +601,17 @@ function PublicRequestPage({ isAuthenticated }) {
           <div className="public-showcase-card">
             <img src={showcaseImage} alt="Премиальный автомобиль после детейлинга" className="public-showcase-image" />
           </div>
-          {isAuthenticated ? <p className="public-auth-hint">Вы уже вошли в CRM и увидите новую заявку сразу после отправки.</p> : null}
+          {isAuthenticated ? <p className="public-auth-hint">Вы уже в CRM, поэтому новая заявка сразу появится в рабочем списке команды после отправки.</p> : null}
         </div>
 
         <div className="public-form-card">
+          <div className="public-form-showcase">
+            <img src={requestFormImage} alt="Автомобиль после премиального детейлинга" className="public-form-showcase-image" />
+            <div className="public-form-showcase-copy">
+              <strong>Готово к визиту</strong>
+              <span>Аккуратная заявка, премиальная подача и понятный следующий шаг для клиента.</span>
+            </div>
+          </div>
           <div className="section-title">
             <div>
               <span className="eyebrow">Форма клиента</span>
@@ -936,10 +927,6 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
           </label>
           <label>
-            Email
-            <input name="email" type="email" value={form.email} onChange={updateField} placeholder="optional@email.com" />
-          </label>
-          <label>
             Услуга
             <select name="service_id" value={form.service_id} onChange={updateField}>
               <option value="">Без услуги</option>
@@ -992,11 +979,6 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
             </div>
           </label>
         </div>
-
-        <label>
-          Адрес
-          <input name="address" value={form.address} onChange={updateField} placeholder="Botanica, Chisinau" />
-        </label>
 
         <label>
           Комментарий
@@ -2345,18 +2327,17 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", session.user.id).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїСЂРѕС„РёР»СЊ.");
+      setError(updateError.message || "Не удалось сохранить профиль.");
       setProfileSaving(false);
       return false;
     }
 
     setProfile(data || null);
     setTeamProfiles((current) => current.map((member) => (member.id === session.user.id ? { ...member, ...payload } : member)));
-    setSaveMessage("РџСЂРѕС„РёР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
+    setSaveMessage("Профиль обновлён.");
     setProfileSaving(false);
     return true;
   }
-
   async function updateTeamMember(memberId, input) {
     setTeamSaving(true);
     setError("");
@@ -2371,7 +2352,7 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("profiles").update(payload).eq("id", memberId).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      setError(updateError.message || "Не удалось обновить участника.");
       setTeamSaving(false);
       return false;
     }
@@ -2380,11 +2361,10 @@ function ProtectedApp({ session, onSignOut }) {
     if (memberId === session.user.id) {
       setProfile((current) => (current ? { ...current, ...data } : current));
     }
-    setSaveMessage("РљРѕРјР°РЅРґР° РѕР±РЅРѕРІР»РµРЅР°.");
+    setSaveMessage("Участник обновлён.");
     setTeamSaving(false);
     return true;
   }
-
   async function deleteTeamMember(memberId) {
     setTeamSaving(true);
     setError("");
@@ -2393,17 +2373,16 @@ function ProtectedApp({ session, onSignOut }) {
     const { error: deleteError } = await supabase.from("profiles").delete().eq("id", memberId);
 
     if (deleteError) {
-      setError(deleteError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      setError(deleteError.message || "Не удалось удалить участника.");
       setTeamSaving(false);
       return false;
     }
 
     setTeamProfiles((current) => current.filter((member) => member.id !== memberId));
-    setSaveMessage("РЈС‡Р°СЃС‚РЅРёРє СѓРґР°Р»С‘РЅ.");
+    setSaveMessage("Участник удалён.");
     setTeamSaving(false);
     return true;
   }
-
   async function createTeamMember(input) {
     setCreatingTeamMember(true);
     setError("");
@@ -2427,7 +2406,7 @@ function ProtectedApp({ session, onSignOut }) {
 
       const nextUserId = signUpData.user?.id;
       if (!nextUserId) {
-        throw new Error("РќРµ СѓРґР°Р»РѕСЃСЊ РїРѕР»СѓС‡РёС‚СЊ id РЅРѕРІРѕРіРѕ Р°РєРєР°СѓРЅС‚Р°.");
+        throw new Error("Не удалось получить id нового аккаунта.");
       }
 
       const payload = {
@@ -2451,16 +2430,15 @@ function ProtectedApp({ session, onSignOut }) {
         }
         return [...current, data || payload];
       });
-      setSaveMessage("РќРѕРІС‹Р№ СѓС‡Р°СЃС‚РЅРёРє СЃРѕР·РґР°РЅ.");
+      setSaveMessage("Новый участник создан.");
       return true;
     } catch (createError) {
-      setError(createError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ СѓС‡Р°СЃС‚РЅРёРєР°.");
+      setError(createError.message || "Не удалось создать участника.");
       return false;
     } finally {
       setCreatingTeamMember(false);
     }
   }
-
   async function updateServiceSettings(serviceId, input) {
     setServiceSavingId(serviceId);
     setError("");
@@ -2476,17 +2454,16 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: updateError } = await supabase.from("services").update(payload).eq("id", serviceId).select("*").maybeSingle();
 
     if (updateError) {
-      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
+      setError(updateError.message || "Не удалось обновить услугу.");
       setServiceSavingId(null);
       return false;
     }
 
     setServices((current) => current.map((service) => (service.id === serviceId ? { ...service, ...data } : service)));
-    setSaveMessage("РЈСЃР»СѓРіР° РѕР±РЅРѕРІР»РµРЅР°.");
+    setSaveMessage("Услуга обновлена.");
     setServiceSavingId(null);
     return true;
   }
-
   async function createServiceSettings(input) {
     setCreatingService(true);
     setError("");
@@ -2502,17 +2479,16 @@ function ProtectedApp({ session, onSignOut }) {
     const { data, error: insertError } = await supabase.from("services").insert(payload).select("*").maybeSingle();
 
     if (insertError) {
-      setError(insertError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РґРѕР±Р°РІРёС‚СЊ СѓСЃР»СѓРіСѓ.");
+      setError(insertError.message || "Не удалось добавить услугу.");
       setCreatingService(false);
       return false;
     }
 
     setServices((current) => [...current, data || payload].sort((a, b) => a.name.localeCompare(b.name)));
-    setSaveMessage("РќРѕРІР°СЏ СѓСЃР»СѓРіР° РґРѕР±Р°РІР»РµРЅР°.");
+    setSaveMessage("Новая услуга добавлена.");
     setCreatingService(false);
     return true;
   }
-
   async function applyDemoPricing() {
     setApplyingDemoPricing(true);
     setError("");
@@ -2547,16 +2523,15 @@ function ProtectedApp({ session, onSignOut }) {
       }
 
       await loadData(selectedLeadId);
-      setSaveMessage("Р”РµРјРѕ-С†РµРЅС‹ Рё РІСЂРµРјСЏ РЅР° СѓСЃР»СѓРіРё РѕР±РЅРѕРІР»РµРЅС‹.");
+      setSaveMessage("Демо-цены и время на услуги обновлены.");
       return true;
     } catch (applyError) {
-      setError(applyError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РїСЂРёРјРµРЅРёС‚СЊ РґРµРјРѕ-С†РµРЅС‹.");
+      setError(applyError.message || "Не удалось применить демо-цены.");
       return false;
     } finally {
       setApplyingDemoPricing(false);
     }
   }
-
   async function changePassword(nextPassword) {
     setPasswordSaving(true);
     setError("");
@@ -2565,20 +2540,19 @@ function ProtectedApp({ session, onSignOut }) {
     const { error: updateError } = await supabase.auth.updateUser({ password: nextPassword });
 
     if (updateError) {
-      setError(updateError.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРјРµРЅРёС‚СЊ РїР°СЂРѕР»СЊ.");
+      setError(updateError.message || "Не удалось сменить пароль.");
       setPasswordSaving(false);
       return false;
     }
 
-    setSaveMessage("РџР°СЂРѕР»СЊ РѕР±РЅРѕРІР»С‘РЅ.");
+    setSaveMessage("Пароль обновлён.");
     setPasswordSaving(false);
     return true;
   }
-
   async function handlePhoneAction(phone) {
     const normalized = normalizePhone(phone);
     if (!normalized) {
-      setError("РЈ РєР»РёРµРЅС‚Р° РЅРµС‚ РЅРѕРјРµСЂР° С‚РµР»РµС„РѕРЅР°.");
+      setError("У клиента нет номера телефона.");
       return;
     }
 
@@ -2591,9 +2565,8 @@ function ProtectedApp({ session, onSignOut }) {
     }
 
     window.location.href = `tel:${normalized}`;
-    setSaveMessage(`\u041d\u043e\u043c\u0435\u0440 ${normalized} \u043f\u0435\u0440\u0435\u0434\u0430\u043d \u0432 \u0441\u0438\u0441\u0442\u0435\u043c\u043d\u044b\u0439 \u043d\u0430\u0431\u043e\u0440.`);
+    setSaveMessage(`Номер ${normalized} передан в системный набор.`);
   }
-
   useEffect(() => {
     loadData();
   }, []);
@@ -2640,7 +2613,7 @@ function ProtectedApp({ session, onSignOut }) {
     const monthAverageTicket = monthClosedLeads ? monthRevenue / monthClosedLeads : 0;
     const monthServiceRevenue = Object.values(
       monthDoneLeads.reduce((accumulator, lead) => {
-        const key = lead.services?.name || "Р‘РµР· СѓСЃР»СѓРіРё";
+        const key = lead.services?.name || "Без услуги";
         if (!accumulator[key]) {
           accumulator[key] = { name: key, count: 0, total: 0 };
         }
