@@ -73,6 +73,27 @@ function emptyToNull(value: string | number | null | undefined) {
   return value;
 }
 
+async function triggerLeadAlert(
+  supabaseUrl: string,
+  internalToken: string | null,
+  payload: Record<string, unknown>
+) {
+  const response = await fetch(`${supabaseUrl}/functions/v1/lead-alert`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(internalToken ? { "x-internal-token": internalToken } : {})
+    },
+    body: JSON.stringify(payload)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Lead alert failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -109,6 +130,7 @@ Deno.serve(async (request) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const internalAlertToken = Deno.env.get("ALERT_INTERNAL_TOKEN") || null;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   const identifierHash = await hashIdentifier(`public_request:${ip}`);
@@ -166,5 +188,42 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: error.message }, 400);
   }
 
-  return jsonResponse({ ok: true, result: data });
+  let alertStatus: "sent" | "skipped" | "failed" = "skipped";
+
+  if (data?.lead_id) {
+    const { data: alertLead, error: alertLeadError } = await supabase
+      .from("leads")
+      .select(
+        "id, source, preferred_date, preferred_time, comment, estimated_price, follow_up_at, clients(name, phone, car_make, car_model, car_year), services(name)"
+      )
+      .eq("id", data.lead_id)
+      .single();
+
+    if (!alertLeadError && alertLead) {
+      try {
+        await triggerLeadAlert(supabaseUrl, internalAlertToken, {
+          event: "lead_created",
+          public_entry: true,
+          lead: alertLead,
+          client: {
+            name: alertLead.clients?.name || null,
+            phone: alertLead.clients?.phone || null
+          },
+          intake: {
+            client_name: normalizeText(payload.client_name),
+            phone,
+            source: normalizeText(payload.source) || "landing",
+            service_id: emptyToNull(payload.service_id) || null
+          },
+          sent_at: new Date().toISOString()
+        });
+        alertStatus = "sent";
+      } catch (alertError) {
+        console.error("public-request lead-alert failed", alertError);
+        alertStatus = "failed";
+      }
+    }
+  }
+
+  return jsonResponse({ ok: true, result: data, alert_status: alertStatus });
 });
