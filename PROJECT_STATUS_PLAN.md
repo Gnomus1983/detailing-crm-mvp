@@ -209,6 +209,7 @@ Current status after recovery:
 ### Client
 - does not log into CRM
 - later uses separate public form / status layer
+- next customer-facing step should be a token-based status page, not a full cabinet
 
 ## 7. Where We Are Right Now
 
@@ -244,6 +245,7 @@ This means:
 - automation first
 - clarity first
 - safety first
+- token-based customer visibility before customer auth complexity
 - SaaS later
 - mobile later
 
@@ -291,6 +293,14 @@ This means:
 - keep role verification fresh before real demos
 - keep pre-demo verification active
 - keep post-change verification active
+
+### Step 5. Keep customer access lightweight
+- do not rush a full client cabinet before first sales
+- if customer access is added next, prefer `/status/:token`
+- only build full client auth after:
+  - public form is simplified
+  - CRM demo flow is stable
+  - event/photo visibility is explicitly split into customer-safe and internal data
 
 ### Step 4. Keep architecture written down
 - use `CODEX_PACKAGE/ARCHITECTURE.md` as current source of truth

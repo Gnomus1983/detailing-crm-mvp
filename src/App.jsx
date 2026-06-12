@@ -443,14 +443,10 @@ function LoginPage({ onAuthenticated }) {
           </div>
           <div className="auth-side-media">
             <img src={loginShowcaseImage} alt="Премиальный автомобиль после детейлинга" className="auth-side-image" />
-            <div className="auth-side-overlay">
-              <strong>DETAILING READY</strong>
-              <span>Чистый поток заявок, роли команды и follow-up в одной CRM.</span>
-            </div>
           </div>
           <div className="auth-side-quote">
-            <p>“Система наконец-то собрала заявки, follow-up и команду в одном месте. Стало понятно, кто ведёт клиента и что делать дальше.”</p>
-            <span>Юрий, владелец детейлинг-центра</span>
+            <p>Войдите в CRM, чтобы сразу увидеть новые заявки, быстро распределить работу по команде и не потерять ни одного клиента.</p>
+            <span>Рабочий вход для владельца, менеджера и мастера</span>
           </div>
         </aside>
       </div>
@@ -486,8 +482,6 @@ function PublicRequestPage({ isAuthenticated }) {
   const automationWebhookUrl = import.meta.env.VITE_AUTOMATION_WEBHOOK_URL || import.meta.env.VITE_N8N_WEBHOOK_URL;
   const showcaseImage =
     "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80";
-  const requestFormImage =
-    "https://images.unsplash.com/photo-1511919884226-fd3cad34687c?auto=format&fit=crop&w=1200&q=80";
 
   useEffect(() => {
     let active = true;
@@ -605,13 +599,6 @@ function PublicRequestPage({ isAuthenticated }) {
         </div>
 
         <div className="public-form-card">
-          <div className="public-form-showcase">
-            <img src={requestFormImage} alt="Автомобиль после премиального детейлинга" className="public-form-showcase-image" />
-            <div className="public-form-showcase-copy">
-              <strong>Готово к визиту</strong>
-              <span>Аккуратная заявка, премиальная подача и понятный следующий шаг для клиента.</span>
-            </div>
-          </div>
           <div className="section-title">
             <div>
               <span className="eyebrow">Форма клиента</span>
@@ -631,7 +618,7 @@ function PublicRequestPage({ isAuthenticated }) {
               </label>
               <label>
                 Телефон
-                <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
+                <input name="phone" value={form.phone} onChange={updateField} placeholder="069" required />
               </label>
               <label>
                 Услуга
@@ -924,7 +911,7 @@ function NewLeadForm({ services, onCreateLead, creatingLead }) {
           </label>
           <label>
             Телефон
-            <input name="phone" value={form.phone} onChange={updateField} placeholder="+373..." required />
+            <input name="phone" value={form.phone} onChange={updateField} placeholder="069" required />
           </label>
           <label>
             Услуга

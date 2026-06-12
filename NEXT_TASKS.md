@@ -4,6 +4,65 @@
 
 Bring the detailing CRM MVP from a working internal CRM to a clear, secure, visually strong, sellable workflow product.
 
+## Current Priority Plan
+
+### 1. Fix live Google login
+- [ ] set correct `Site URL` in Supabase Auth URL Configuration
+- [ ] add live and local redirect URLs in Supabase Auth
+- [ ] keep Google OAuth in `test mode` for now
+- [ ] add required demo emails to Google `Test users`
+- [ ] verify Google login on live domain
+
+### 2. Clean all broken text / encoding / mixed language
+- [ ] remove mojibake from all live screens
+- [ ] keep one language standard per screen
+- [ ] replace leftover placeholder/demo English notes in CRM
+- [ ] recheck auth, dashboard, settings, leads, clients, and public form
+
+### 3. Lock one clean live demo version
+- [ ] keep one live URL as the main demo entry
+- [ ] ensure `/` is team login entry
+- [ ] ensure `/request` is public customer form
+- [ ] remove confusion between localhost and live demo links
+
+### 4. Simplify the public request form
+- [ ] keep only `name`, `phone`, and `service` as required
+- [ ] move extra fields into optional flow or remove from first screen
+- [ ] keep the page visually strong but lighter to complete
+- [ ] retest submit success on live domain
+
+### 5. Re-run full first-client demo flow
+- [ ] customer submits request
+- [ ] lead appears in CRM
+- [ ] manager logs in and changes status
+- [ ] manager sets follow-up
+- [ ] owner sees the updated pipeline
+- [ ] Telegram reminder/automation is verified again
+
+### 6. Keep the right customer-facing direction
+- [ ] do not prioritize a full client cabinet before first real sales
+- [ ] keep the next customer-facing layer as a token-based `/status/:token` page
+- [ ] when returning to customer access later, separate `customer-visible` and `internal` lead events
+- [ ] when returning to customer photos later, separate customer-safe photos from internal attachments
+- [ ] never auto-link a client account to an existing CRM client by email alone without an explicit safe flow
+
+### 7. Client-app backend status
+- [x] prepare Supabase backend layer for a future client app without breaking current CRM
+- [x] add secure `client_accounts` linkage model for invite-based client auth
+- [x] add client-safe RPC layer for leads, events, and attachments
+- [x] add private storage bucket for customer-visible lead photos
+- [x] keep this backend compatibility layer ready, but do not move product focus away from the lighter `/status/:token` experience before first sales
+- [ ] if full client auth is resumed later, expose only customer-safe events and customer-safe photos in UI
+
+## Not Doing Now
+
+- [ ] do not build photo before/after flow yet
+- [ ] do not build client status page yet
+- [ ] do not build client cabinet yet
+- [ ] do not force full client auth before the public form, CRM UX, and first sales are stable
+- [ ] do not deepen analytics/reporting beyond demo-ready level
+- [ ] do not expand into universal CRM features
+
 ## Immediate Checklist
 
 ### 0. Keep the plan explicit
@@ -129,6 +188,9 @@ Bring the detailing CRM MVP from a working internal CRM to a clear, secure, visu
 - Keep the product narrow
 - Do not turn this into a large universal CRM
 - Preserve current architecture
+- Competitor pattern confirms that a simple client status page is the next logical layer, not a heavy customer portal
+- If a customer app is built later, `lead_events` and `attachments` must have customer-visible filtering from day one
+- Moldova-ready customer auth should stay lightweight first; email magic link is acceptable for MVP, full auth expansion later
 - Do not use Supabase secret key on frontend
 - Optimize for sellable MVP value, not feature count
 - Move away from `n8n-first`
