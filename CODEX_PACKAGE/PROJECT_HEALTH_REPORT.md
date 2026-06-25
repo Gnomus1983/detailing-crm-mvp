@@ -32,7 +32,7 @@ npm run test:smoke
 ```
 
 Результат:
-- Passed: 5
+- Passed: 12
 - Failed: 0
 - Skipped: 0
 
@@ -41,6 +41,12 @@ npm run test:smoke
 - browser validation формы работает
 - auth страница открывается
 - dashboard доступен после логина тестовым аккаунтом
+- карточка заявки открывается без white screen
+- company login context работает
+- owner settings открываются
+- creator корректно уходит только в `/platform`
+- owner не попадает в `/platform`
+- public `/status/:token` открывается
 - rate limiting на public request срабатывает с `429`
 
 ## 3. Security check
