@@ -41,7 +41,7 @@ const supabase = createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHAB
   }
 });
 
-const webhookUrl = env.VITE_AUTOMATION_WEBHOOK_URL || env.VITE_N8N_WEBHOOK_URL;
+const webhookUrl = env.VITE_AUTOMATION_WEBHOOK_URL || "http://127.0.0.1:4010/mock-automation";
 const capturedWebhooks = [];
 
 function startMockWebhookServer(urlString) {
@@ -147,10 +147,6 @@ async function ensureSession() {
 async function main() {
   if (!env.VITE_SUPABASE_URL || !env.VITE_SUPABASE_PUBLISHABLE_KEY) {
     throw new Error("Missing Supabase env vars.");
-  }
-
-  if (!webhookUrl) {
-    throw new Error("Missing VITE_AUTOMATION_WEBHOOK_URL in .env. Legacy VITE_N8N_WEBHOOK_URL is still accepted only for backward compatibility.");
   }
 
   const webhookServer = await startMockWebhookServer(webhookUrl);

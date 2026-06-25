@@ -8,3 +8,18 @@ verify_jwt = false
 
 [functions.daily-digest]
 verify_jwt = false
+
+[functions.client-telegram-link]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.client-ready-telegram]
+verify_jwt = true
+
+[functions.telegram-bot-admin]
+verify_jwt = true
+
+[functions.demo-request]
+verify_jwt = false

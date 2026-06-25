@@ -1,13 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
-
-const corsHeaders = {
-  // TODO: replace "*" with the production app domain before public launch.
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json"
-};
+import { buildCorsHeaders } from "../_shared/cors.ts";
 
 const sourceSchema = z.enum(["manual", "landing", "instagram", "telegram", "whatsapp", "phone", "facebook", "other"]);
 
@@ -15,6 +8,7 @@ const publicLeadSchema = z
   .object({
     client_name: z.string().trim().min(2).max(120),
     phone: z.string().trim().min(6).max(32),
+    company_slug: z.string().trim().min(2).max(120),
     email: z.union([z.string().trim().email().max(160), z.literal(""), z.null()]).optional(),
     service_id: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
     car_make: z.union([z.string().trim().max(80), z.literal(""), z.null()]).optional(),
@@ -32,7 +26,7 @@ const publicLeadSchema = z
   })
   .strict();
 
-function jsonResponse(body: unknown, status = 200) {
+function jsonResponse(body: unknown, corsHeaders: Record<string, string>, status = 200) {
   return new Response(JSON.stringify(body, null, 2), {
     status,
     headers: corsHeaders
@@ -65,6 +59,10 @@ function normalizeText(value: unknown) {
   return trimmed ? trimmed : null;
 }
 
+function normalizeCompanySlug(value: unknown) {
+  return normalizeText(value);
+}
+
 function emptyToNull(value: string | number | null | undefined) {
   if (value === "" || value == null) {
     return null;
@@ -94,14 +92,56 @@ async function triggerLeadAlert(
   return response.json();
 }
 
+async function resolveEstimatedPrice(
+  supabase: ReturnType<typeof createClient>,
+  serviceId: string | null,
+  estimatedPrice: number | null
+) {
+  if (typeof estimatedPrice === "number" && Number.isFinite(estimatedPrice) && estimatedPrice > 0) {
+    return estimatedPrice;
+  }
+
+  if (!serviceId) {
+    return null;
+  }
+
+  const { data, error } = await supabase.from("services").select("base_price").eq("id", serviceId).maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  const basePrice = Number(data?.base_price || 0);
+  return Number.isFinite(basePrice) && basePrice > 0 ? basePrice : null;
+}
+
+async function resolveCompanySummary(
+  supabase: ReturnType<typeof createClient>,
+  companySlug: string
+) {
+  const { data, error } = await supabase
+    .from("companies")
+    .select("id, name, slug, status")
+    .eq("slug", companySlug)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 Deno.serve(async (request) => {
+  const corsHeaders = buildCorsHeaders(request);
+
   try {
     if (request.method === "OPTIONS") {
       return new Response("ok", { headers: corsHeaders });
     }
 
     if (request.method !== "POST") {
-      return jsonResponse({ error: "Metoda nu este permisa" }, 405);
+      return jsonResponse({ error: "Метод не поддерживается." }, corsHeaders, 405);
     }
 
     const body = await request.json();
@@ -110,9 +150,10 @@ Deno.serve(async (request) => {
     if (!parsed.success) {
       return jsonResponse(
         {
-          error: "Datele cererii nu sunt valide.",
+          error: "Данные заявки заполнены неверно.",
           details: parsed.error.flatten()
         },
+        corsHeaders,
         400
       );
     }
@@ -120,57 +161,74 @@ Deno.serve(async (request) => {
     const payload = parsed.data;
     const ip = getClientIp(request);
     const phone = normalizeText(payload.phone);
+    const companySlug = normalizeCompanySlug(payload.company_slug);
+
+    if (!companySlug) {
+      return jsonResponse({ error: "Не указан company_slug для клиентской формы." }, corsHeaders, 400);
+    }
 
     if (!ip) {
-      return jsonResponse({ error: "Nu am putut valida sursa cererii." }, 400);
+      return jsonResponse({ error: "Не удалось проверить источник заявки." }, corsHeaders, 400);
     }
 
     if (!normalizeText(payload.client_name) || !phone) {
-      return jsonResponse({ error: "Numele si telefonul sunt obligatorii." }, 400);
+      return jsonResponse({ error: "Имя и телефон обязательны." }, corsHeaders, 400);
     }
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const internalAlertToken = Deno.env.get("ALERT_INTERNAL_TOKEN") || null;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
+    const normalizedServiceId = emptyToNull(payload.service_id) || null;
+    const companySummary = await resolveCompanySummary(supabase, companySlug);
+    if (!companySummary?.id || companySummary.status !== "active") {
+      return jsonResponse({ error: "Клиентская форма для этой компании сейчас недоступна." }, corsHeaders, 400);
+    }
+    const resolvedEstimatedPrice = await resolveEstimatedPrice(
+      supabase,
+      normalizedServiceId,
+      typeof payload.estimated_price === "number" ? payload.estimated_price : null
+    );
 
-    const identifierHash = await hashIdentifier(`public_request:${ip}`);
+    const rateLimitActionKey = `public_request:${companySlug}`;
+    const identifierHash = await hashIdentifier(`public_request:${companySlug}:${ip}`);
     const oneHourAgoIso = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 
     const { count, error: rateLimitError } = await supabase
       .from("rate_limit_events")
       .select("*", { count: "exact", head: true })
-      .eq("action_key", "public_request")
+      .eq("action_key", rateLimitActionKey)
       .eq("identifier_hash", identifierHash)
       .gte("created_at", oneHourAgoIso);
 
     if (rateLimitError) {
-      return jsonResponse({ error: rateLimitError.message }, 500);
+      return jsonResponse({ error: rateLimitError.message }, corsHeaders, 500);
     }
 
     if ((count || 0) >= 3) {
       return jsonResponse(
         {
-          error: "Ai trimis deja prea multe cereri in ultima ora. Incearca din nou mai tarziu."
+          error: "Вы уже отправили слишком много заявок за последний час. Попробуйте позже."
         },
+        corsHeaders,
         429
       );
     }
 
     const { error: logError } = await supabase.from("rate_limit_events").insert({
-      action_key: "public_request",
+      action_key: rateLimitActionKey,
       identifier_hash: identifierHash
     });
 
     if (logError) {
-      return jsonResponse({ error: logError.message }, 500);
+      return jsonResponse({ error: logError.message }, corsHeaders, 500);
     }
 
     const { data, error } = await supabase.rpc("submit_public_lead", {
       p_client_name: normalizeText(payload.client_name),
       p_phone: phone,
       p_email: normalizeText(payload.email),
-      p_service_id: emptyToNull(payload.service_id) || null,
+      p_service_id: normalizedServiceId,
       p_car_make: normalizeText(payload.car_make),
       p_car_model: normalizeText(payload.car_model),
       p_car_year: typeof payload.car_year === "number" ? payload.car_year : null,
@@ -180,16 +238,17 @@ Deno.serve(async (request) => {
       p_comment: normalizeText(payload.comment),
       p_preferred_date: emptyToNull(payload.preferred_date) || null,
       p_preferred_time: normalizeText(payload.preferred_time),
-      p_estimated_price: typeof payload.estimated_price === "number" ? payload.estimated_price : null,
+      p_estimated_price: resolvedEstimatedPrice,
       p_follow_up_at:
         typeof payload.follow_up_at === "string" && payload.follow_up_at
           ? new Date(payload.follow_up_at).toISOString()
           : null,
-      p_website: normalizeText(payload.website)
+      p_website: normalizeText(payload.website),
+      p_company_slug: companySlug
     });
 
     if (error) {
-      return jsonResponse({ error: error.message }, 400);
+      return jsonResponse({ error: error.message }, corsHeaders, 400);
     }
 
     let alertStatus: "sent" | "skipped" | "failed" = "skipped";
@@ -198,7 +257,7 @@ Deno.serve(async (request) => {
       const { data: alertLead, error: alertLeadError } = await supabase
         .from("leads")
         .select(
-          "id, source, preferred_date, preferred_time, comment, estimated_price, follow_up_at, clients(name, phone, car_make, car_model, car_year), services(name)"
+          "id, source, preferred_date, preferred_time, comment, estimated_price, follow_up_at, company_id, clients(name, phone, car_make, car_model, car_year), services(name, base_price)"
         )
         .eq("id", data.lead_id)
         .single();
@@ -213,11 +272,17 @@ Deno.serve(async (request) => {
               name: alertLead.clients?.name || null,
               phone: alertLead.clients?.phone || null
             },
+            company: {
+              id: companySummary?.id || alertLead.company_id || null,
+              name: companySummary?.name || null,
+              slug: companySummary?.slug || companySlug
+            },
             intake: {
               client_name: normalizeText(payload.client_name),
               phone,
               source: normalizeText(payload.source) || "landing",
-              service_id: emptyToNull(payload.service_id) || null
+              service_id: normalizedServiceId,
+              company_slug: companySlug
             },
             sent_at: new Date().toISOString()
           });
@@ -229,10 +294,10 @@ Deno.serve(async (request) => {
       }
     }
 
-    return jsonResponse({ ok: true, result: data, alert_status: alertStatus });
+    return jsonResponse({ ok: true, result: data, alert_status: alertStatus }, corsHeaders);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unexpected public-request failure";
     console.error("public-request fatal", error);
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: message }, corsHeaders, 500);
   }
 });

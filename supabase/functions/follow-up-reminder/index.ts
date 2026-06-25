@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { createAutomationRun } from "../_shared/automation-log.ts";
+import { requireInternalToken } from "../_shared/internal-auth.ts";
 import { escapeTelegramHtml, sendTelegramMessage } from "../_shared/telegram.ts";
 
 type DueLead = {
@@ -43,7 +44,7 @@ function formatLeadReminder(lead: DueLead) {
     : "Nesetat";
   const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Fara detalii auto";
   const comment = lead.comment || "Fara comentariu";
-  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `${lead.estimated_price} EUR` : "Neevaluat";
+  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `${lead.estimated_price} MDL` : "Neevaluat";
 
   return [
     "<b>Follow-up scadent</b>",
@@ -67,14 +68,10 @@ Deno.serve(async (request) => {
     return jsonResponse({ error: "Metoda nu este permisa" }, 405);
   }
 
-  const internalToken = Deno.env.get("ALERT_INTERNAL_TOKEN");
-  if (internalToken) {
-    const provided = request.headers.get("x-internal-token");
-    if (provided !== internalToken) {
-      return jsonResponse({ error: "Neautorizat" }, 401);
-    }
+  const authError = requireInternalToken(request);
+  if (authError) {
+    return authError;
   }
-
   const telegramBotToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
   const telegramChatId = Deno.env.get("TELEGRAM_MANAGER_CHAT_ID");
 

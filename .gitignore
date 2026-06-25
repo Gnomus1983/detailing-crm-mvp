@@ -10,3 +10,4 @@ tmp-ui-check/
 tmp-ui-check-auth/
 tmp-ui-check-polish/
 .herenow/
+supabase/.temp/

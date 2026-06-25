@@ -5,7 +5,7 @@ create table if not exists public.client_accounts (
   client_id uuid not null references public.clients(id) on delete cascade,
   auth_user_id uuid references auth.users(id) on delete cascade,
   email text not null,
-  status text not null default 'invited' check (status in ('invited', 'active', 'disabled')),
+  status text not null default 'invited' check (status in ('invited','active','disabled')),
   last_login_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
@@ -478,4 +478,4 @@ before update on public.client_accounts
 for each row
 execute function public.set_updated_at();
 
-commit;
+commit;;

@@ -9,7 +9,14 @@
     "preview": "vite preview",
     "demo:flow": "node scripts/demo-flow.mjs",
     "public:flow": "node scripts/public-flow-check.mjs",
-    "test:smoke": "playwright test tests/smoke.spec.ts"
+    "platform:qa": "node scripts/platform-qa.mjs",
+    "platform:qa:strict": "node scripts/platform-qa.mjs --strict",
+    "platform:paid-close": "node scripts/platform-paid-close.mjs",
+    "platform:bootstrap-company": "node scripts/platform-bootstrap-company.mjs",
+    "platform:real-onboarding": "node scripts/platform-real-onboarding.mjs",
+    "hardening:audit": "node scripts/hardening-audit.mjs",
+    "test:smoke": "playwright test tests/smoke.spec.ts",
+    "publish:here-now": "node scripts/publish_here_now.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",

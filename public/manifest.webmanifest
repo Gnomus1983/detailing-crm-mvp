@@ -1,0 +1,47 @@
+{
+  "name": "Detail CRM",
+  "short_name": "Detail CRM",
+  "description": "Онлайн-запись и статус автомобиля для клиентов Detail CRM.",
+  "start_url": "/request",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f7fb",
+  "theme_color": "#111111",
+  "lang": "ru",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Новая запись",
+      "short_name": "Запись",
+      "url": "/request",
+      "description": "Открыть пошаговую заявку"
+    },
+    {
+      "name": "Вход в CRM",
+      "short_name": "CRM",
+      "url": "/",
+      "description": "Открыть вход для команды"
+    }
+  ]
+}

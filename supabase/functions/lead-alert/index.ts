@@ -1,6 +1,7 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3.23.8";
 import { createAutomationRun } from "../_shared/automation-log.ts";
+import { requireInternalToken } from "../_shared/internal-auth.ts";
 import { escapeTelegramHtml, sendTelegramMessage } from "../_shared/telegram.ts";
 
 const leadAlertPayloadSchema = z
@@ -18,7 +19,8 @@ const leadAlertPayloadSchema = z
         follow_up_at: z.string().max(80).nullable().optional(),
         services: z
           .object({
-            name: z.string().max(120).nullable().optional()
+            name: z.string().max(120).nullable().optional(),
+            base_price: z.union([z.number(), z.string().max(40), z.null()]).optional()
           })
           .nullable()
           .optional(),
@@ -42,12 +44,21 @@ const leadAlertPayloadSchema = z
       })
       .nullable()
       .optional(),
+    company: z
+      .object({
+        id: z.string().uuid().nullable().optional(),
+        name: z.string().max(160).nullable().optional(),
+        slug: z.string().max(160).nullable().optional()
+      })
+      .nullable()
+      .optional(),
     intake: z
       .object({
         client_name: z.string().max(120).nullable().optional(),
         phone: z.string().max(40).nullable().optional(),
         source: z.string().max(40).nullable().optional(),
-        service_id: z.string().uuid().nullable().optional()
+        service_id: z.string().uuid().nullable().optional(),
+        company_slug: z.string().max(160).nullable().optional()
       })
       .nullable()
       .optional(),
@@ -64,26 +75,71 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+const sourceLabels: Record<string, string> = {
+  manual: "Вручную",
+  landing: "Сайт",
+  instagram: "Инстаграм",
+  telegram: "Телеграм",
+  whatsapp: "Вотсап",
+  phone: "Телефон",
+  facebook: "Фейсбук",
+  other: "Другое"
+};
+
+const serviceLabels: Record<string, string> = {
+  "Spalare exterioara": "Мойка кузова",
+  "Curatare salon": "Химчистка салона",
+  "Spalare detaliata": "Детальная мойка",
+  "Detailing interior": "Детейлинг салона",
+  "Polizare completa": "Полировка кузова",
+  "Detailing complet": "Полный детейлинг",
+  Ceramica: "Керамическое покрытие",
+  "Polizare + Ceramica": "Полировка + керамика",
+  "Consultatie coating ceramic": "Консультация по керамике"
+};
+
+function formatSource(value: string | null | undefined) {
+  if (!value) {
+    return "Не указан";
+  }
+
+  return sourceLabels[value] || value;
+}
+
+function formatServiceName(value: string | null | undefined) {
+  if (!value) {
+    return "Услуга не указана";
+  }
+
+  return serviceLabels[value] || value;
+}
+
 function normalizeAlert(payload: z.infer<typeof leadAlertPayloadSchema>) {
   const lead = payload.lead || {};
   const client = payload.client || lead.clients || {};
   const intake = payload.intake || {};
+  const company = payload.company || {};
+  const normalizedEstimatedPrice = Number(lead.estimated_price || 0);
+  const normalizedBasePrice = Number(lead.services?.base_price || 0);
 
-  const clientName = client.name || intake.client_name || "Client necunoscut";
-  const phone = client.phone || intake.phone || "Fara telefon";
-  const source = lead.source || intake.source || "manual";
-  const service = lead.services?.name || "Serviciu nerezolvat inca";
+  const clientName = client.name || intake.client_name || "Клиент не указан";
+  const phone = client.phone || intake.phone || "Без телефона";
+  const source = formatSource(lead.source || intake.source || "manual");
+  const service = formatServiceName(lead.services?.name || null);
   const preferredSlot = lead.preferred_date
     ? `${lead.preferred_date}${lead.preferred_time ? ` ${lead.preferred_time}` : ""}`
-    : "Nesetat";
-  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Fara detalii auto";
-  const comment = lead.comment || "Fara comentariu";
-  const price = lead.estimated_price != null && lead.estimated_price !== "" ? `${lead.estimated_price} EUR` : "Neevaluat";
+    : "Не указан";
+  const car = [lead.clients?.car_make, lead.clients?.car_model, lead.clients?.car_year].filter(Boolean).join(" ") || "Автомобиль не указан";
+  const comment = lead.comment || "Без комментария";
+  const priceValue = normalizedEstimatedPrice > 0 ? normalizedEstimatedPrice : normalizedBasePrice > 0 ? normalizedBasePrice : null;
+  const price = priceValue != null ? `${priceValue} MDL` : "Не оценено";
+  const companyName = company.name || company.slug || intake.company_slug || "Компания не указана";
 
   return {
     leadId: lead.id || "unknown",
     clientName,
     phone,
+    companyName,
     source,
     service,
     preferredSlot,
@@ -96,24 +152,20 @@ function normalizeAlert(payload: z.infer<typeof leadAlertPayloadSchema>) {
 
 Deno.serve(async (request) => {
   if (request.method !== "POST") {
-    return jsonResponse({ error: "Metoda nu este permisa" }, 405);
+    return jsonResponse({ error: "Метод не поддерживается." }, 405);
   }
 
-  const internalToken = Deno.env.get("ALERT_INTERNAL_TOKEN");
-  if (internalToken) {
-    const provided = request.headers.get("x-internal-token");
-    if (provided !== internalToken) {
-      return jsonResponse({ error: "Neautorizat" }, 401);
-    }
+  const authError = requireInternalToken(request);
+  if (authError) {
+    return authError;
   }
-
   const telegramBotToken = Deno.env.get("TELEGRAM_BOT_TOKEN");
   const telegramChatId = Deno.env.get("TELEGRAM_MANAGER_CHAT_ID");
 
   if (!telegramBotToken || !telegramChatId) {
     return jsonResponse(
       {
-        error: "Lipsesc TELEGRAM_BOT_TOKEN sau TELEGRAM_MANAGER_CHAT_ID"
+        error: "Не заданы TELEGRAM_BOT_TOKEN или TELEGRAM_MANAGER_CHAT_ID."
       },
       500
     );
@@ -125,7 +177,7 @@ Deno.serve(async (request) => {
   if (!parsed.success) {
     return jsonResponse(
       {
-        error: "Payload-ul de alerta nu este valid.",
+        error: "Данные уведомления заполнены неверно.",
         details: parsed.error.flatten()
       },
       400
@@ -134,7 +186,7 @@ Deno.serve(async (request) => {
 
   const payload = parsed.data;
   if (payload.event && payload.event !== "lead_created") {
-    return jsonResponse({ skipped: true, reason: `Eveniment nesuportat ${payload.event}` });
+    return jsonResponse({ skipped: true, reason: `Неподдерживаемое событие: ${payload.event}` });
   }
 
   const alert = normalizeAlert(payload);
@@ -155,19 +207,20 @@ Deno.serve(async (request) => {
 
   try {
     const message = [
-      "<b>Solicitare noua detailing</b>",
+      "<b>Новая заявка на детейлинг</b>",
       "",
-      `<b>Client:</b> ${escapeTelegramHtml(alert.clientName)}`,
-      `<b>Telefon:</b> ${escapeTelegramHtml(alert.phone)}`,
-      `<b>Serviciu:</b> ${escapeTelegramHtml(alert.service)}`,
-      `<b>Sursa:</b> ${escapeTelegramHtml(alert.source)}`,
-      `<b>Masina:</b> ${escapeTelegramHtml(alert.car)}`,
-      `<b>Interval preferat:</b> ${escapeTelegramHtml(alert.preferredSlot)}`,
-      `<b>Pret estimat:</b> ${escapeTelegramHtml(alert.price)}`,
-      `<b>ID solicitare:</b> ${escapeTelegramHtml(alert.leadId)}`,
-      `<b>Intrare:</b> ${alert.publicEntry ? "Formular public" : "CRM intern"}`,
+      `<b>Компания:</b> ${escapeTelegramHtml(alert.companyName)}`,
+      `<b>Клиент:</b> ${escapeTelegramHtml(alert.clientName)}`,
+      `<b>Телефон:</b> ${escapeTelegramHtml(alert.phone)}`,
+      `<b>Услуга:</b> ${escapeTelegramHtml(alert.service)}`,
+      `<b>Источник:</b> ${escapeTelegramHtml(alert.source)}`,
+      `<b>Автомобиль:</b> ${escapeTelegramHtml(alert.car)}`,
+      `<b>Предпочтительное время:</b> ${escapeTelegramHtml(alert.preferredSlot)}`,
+      `<b>Ориентировочная цена:</b> ${escapeTelegramHtml(alert.price)}`,
+      `<b>ID заявки:</b> ${escapeTelegramHtml(alert.leadId)}`,
+      `<b>Канал:</b> ${alert.publicEntry ? "Публичная форма" : "Внутренняя CRM"}`,
       "",
-      `<b>Comentariu:</b> ${escapeTelegramHtml(alert.comment)}`
+      `<b>Комментарий:</b> ${escapeTelegramHtml(alert.comment)}`
     ].join("\n");
 
     const telegramResult = await sendTelegramMessage({
